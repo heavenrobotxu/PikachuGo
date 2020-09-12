@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    android:orientation="vertical"
+    android:gravity="center">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btn_a_download"
+            android:text="下载"
+            android:layout_width="100dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center"/>
+
+        <Button
+            android:id="@+id/btn_a_pause"
+            android:text="暂停"
+            android:layout_width="100dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center"/>
+
+        <Button
+            android:id="@+id/btn_a_resume"
+            android:text="恢复"
+            android:layout_width="100dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center"/>
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tv_a_filename"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:layout_marginTop="10dp" />
+
+    <ProgressBar
+        android:id="@+id/pb_a_process"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:max="100"
+        />
+
+    <Button
+        android:id="@+id/btn_b_download"
+        android:text="下载"
+        android:layout_width="100dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center"/>
+
+    <TextView
+        android:id="@+id/tv_b_filename"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:layout_marginTop="10dp" />
+
+    <ProgressBar
+        android:id="@+id/pb_b_process"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:max="100"
+        />
+
+    <Button
+        android:id="@+id/btn_c_download"
+        android:text="下载"
+        android:layout_width="100dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center"/>
+
+    <TextView
+        android:id="@+id/tv_c_filename"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:layout_marginTop="10dp" />
+
+    <ProgressBar
+        android:id="@+id/pb_c_process"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:max="100"
+        />
+
+
+</LinearLayout>

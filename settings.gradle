@@ -1,0 +1,3 @@
+include ':pikachu'
+include ':app'
+rootProject.name = "PikachuGo"
