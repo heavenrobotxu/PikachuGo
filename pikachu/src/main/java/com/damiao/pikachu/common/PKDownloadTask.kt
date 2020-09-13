@@ -1,16 +1,41 @@
 package com.damiao.pikachu.common
 
+import android.database.Observable
+import com.damiao.pikachu.core.PkDownloadTaskPersister
 import java.io.File
+import java.lang.RuntimeException
 
-interface PKDownloadTask : PKTask {
+abstract class PKDownloadTask : PKTask, Observable<PkDownloadTaskPersister>() {
 
-    val pkRequest: PKDownloadTaskRequest
+    abstract val pkRequest: PKDownloadTaskRequest
 
-    var taskAlreadyDone: Boolean
+    abstract var taskAlreadyDone: Boolean
 
-    var downloadResultFile: File?
+    abstract var downloadResultFile: File?
 
-    var downloadFileName: String?
+    abstract var downloadFileName: String?
 
-    fun changeProgress(appendSize: Long)
+    abstract var versionTagId: String?
+    //下载速度，单位为kb/s或b/s或mb/s
+    abstract var downloadSpeed: String?
+
+    //更新任务的下载进度
+    internal abstract fun changeProgress(appendSize: Long)
+
+    //开始执行Task
+    internal abstract fun start()
+
+    //内部调用，触发Task执行成功
+    internal abstract fun success()
+
+    //内部调用，触发Task失败状态
+    internal abstract fun fail(reason: String? = null, exception: RuntimeException? = null)
+
+    //触发下载任务的持久化
+    fun triggerPersist(isUpdate: Boolean = true) {
+        for (mObserver in mObservers) {
+            if (isUpdate) mObserver.updateDownloadTask(this)
+            else mObserver.saveDownloadTask(this)
+        }
+    }
 }

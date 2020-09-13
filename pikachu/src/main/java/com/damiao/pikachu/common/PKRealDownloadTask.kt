@@ -2,16 +2,17 @@ package com.damiao.pikachu.common
 
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
-import okhttp3.internal.notify
+import com.damiao.pikachu.util.getDownloadFileSizeDescription
 import okhttp3.internal.notifyAll
 import java.io.File
+import java.lang.UnsupportedOperationException
 
 class PKRealDownloadTask(
     override val pkRequest: PKDownloadTaskRequest,
     override val taskId: String,
     @Volatile
     override var downloadFileName: String? = null
-) : PKDownloadTask {
+) : PKDownloadTask() {
 
     @Volatile
     override var taskAlreadyDone = false
@@ -26,48 +27,85 @@ class PKRealDownloadTask(
     override var contentLength: Long = 0
 
     @Volatile
-    private var status: Int = TASK_STATUS_READY
+    override var status: Int = PKTask.TASK_STATUS_READY
 
     @Volatile
-    private var failType: Int? = null
+    override var failType: Int? = null
 
+    override var failMessage: String? = null
+
+    override var versionTagId: String? = null
+
+    override var downloadSpeed: String? = null
+
+    private var lastCalculateSpeedTime: Long = 0L
+    private var lastCalculateProgress: Long = 0L
 
     override fun start() {
-        status = TASK_STATUS_EXECUTING
+        status = PKTask.TASK_STATUS_EXECUTING
+        triggerPersist()
     }
 
     override fun pause() {
-        status = TASK_STATUS_PAUSE
+        if (status != PKTask.TASK_STATUS_EXECUTING) {
+            throw UnsupportedOperationException("Download Task can only pause in EXECUTING status")
+        }
+        status = PKTask.TASK_STATUS_PAUSE
+        triggerPersist()
     }
 
     override fun isPause(): Boolean {
-        return status == TASK_STATUS_PAUSE
+        return status == PKTask.TASK_STATUS_PAUSE
     }
 
     override fun resume() {
-        status = TASK_STATUS_EXECUTING
+        if (status != PKTask.TASK_STATUS_PAUSE) {
+            throw UnsupportedOperationException("Download Task can only resume in PAUSE status")
+        }
+        status = PKTask.TASK_STATUS_EXECUTING
+        triggerPersist()
         synchronized(this) {
             notifyAll()
         }
     }
 
     override fun cancel() {
-        status = TASK_STATUS_FAIL
-        failType = TASK_FAIL_TYPE_CANCEL
+        status = PKTask.TASK_STATUS_FAIL
+        failType = PKTask.TASK_FAIL_TYPE_CANCEL
+        triggerPersist()
     }
 
     override fun fail(reason: String?, exception: RuntimeException?) {
-        status = TASK_FAIL_TYPE_COMMON_FAIL
+        status = PKTask.TASK_STATUS_FAIL
+        failType = PKTask.TASK_FAIL_TYPE_COMMON_FAIL
+        failMessage = reason ?: exception?.message ?: "unknown fail reason"
+        triggerPersist()
     }
 
     override fun success() {
-        status = TASK_STATUS_COMPLETE
+        status = PKTask.TASK_STATUS_COMPLETE
+        triggerPersist()
     }
 
     override fun changeProgress(appendSize: Long) {
+        //下载速度计算
+        if (lastCalculateSpeedTime == 0L) {
+            lastCalculateSpeedTime = System.currentTimeMillis()
+
+        } else {
+            //每隔一秒更新一次下载速度
+            val now = System.currentTimeMillis()
+            if (now - lastCalculateSpeedTime >= 1000) {
+                downloadSpeed =
+                    "${getDownloadFileSizeDescription(progress - lastCalculateProgress)}/s"
+                lastCalculateProgress = progress
+                lastCalculateSpeedTime = now
+            }
+        }
         synchronized(this) {
             progress += appendSize
         }
+        //进度更新时不更新数据库进度信息，否则会造成读写数据库太频繁
     }
 
     @OnLifecycleEvent(value = Lifecycle.Event.ON_DESTROY)
@@ -77,19 +115,5 @@ class PKRealDownloadTask(
 
     fun getDownloadFile(): File? {
         return downloadResultFile
-    }
-
-    companion object {
-
-        const val TASK_STATUS_READY = 0
-        const val TASK_STATUS_EXECUTING = 1
-        const val TASK_STATUS_PAUSE = 2
-        const val TASK_STATUS_RESUME = 3
-        const val TASK_STATUS_COMPLETE = 4
-        const val TASK_STATUS_FAIL = 5
-
-        const val TASK_FAIL_TYPE_CANCEL = 10
-        const val TASK_FAIL_TYPE_TIMEOUT = 11
-        const val TASK_FAIL_TYPE_COMMON_FAIL = 12
     }
 }

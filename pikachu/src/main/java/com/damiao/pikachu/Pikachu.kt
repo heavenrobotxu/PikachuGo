@@ -4,21 +4,28 @@ import android.app.Application
 import androidx.lifecycle.LifecycleOwner
 import com.damiao.pikachu.common.PKConfig
 import com.damiao.pikachu.common.PKLog
+import com.damiao.pikachu.common.PKRealDownloadTask
 import com.damiao.pikachu.common.PKTaskParam
 import com.damiao.pikachu.core.PKDispatcher
 import com.damiao.pikachu.core.PKDownloadEngine
+import com.damiao.pikachu.core.PkDownloadTaskPersister
 
 object Pikachu {
 
+    lateinit var app: Application
+    private var isInit: Boolean = false
+
     internal lateinit var pkConfig: PKConfig
+
     val pkDispatcher: PKDispatcher by lazy {
         pkConfig.pkDispatcherFactory.createPKDispatcher(this)
     }
     val pkDownloadEngine: PKDownloadEngine by lazy {
         pkConfig.pkDownloadEngineFactory.createDownloadEngine(this)
     }
-    lateinit var app: Application
-    private var isInit: Boolean = false
+    val pkDownloadTaskPersister: PkDownloadTaskPersister by lazy {
+        pkConfig.pkDownloadTaskPersisterFactory.createDownloadTaskPersister(this)
+    }
 
     fun with(lifecycle: LifecycleOwner): PKTaskParam {
         if (!isInit) {

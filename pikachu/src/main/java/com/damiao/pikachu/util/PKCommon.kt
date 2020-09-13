@@ -2,13 +2,18 @@ package com.damiao.pikachu.util
 
 import okio.ByteString.Companion.encodeUtf8
 import java.math.BigDecimal
+import java.util.*
 
 const val KB = 1024
 const val MB = 1024 * 1024
 const val GB = 1024 * 1024 * 1024
 
-fun encodeId(originalInfo: String): String {
-    return originalInfo.encodeUtf8().sha1().hex()
+fun uuid(): String {
+    return UUID.randomUUID().toString()
+}
+
+fun String.sha1() : String{
+    return this.encodeUtf8().sha1().hex()
 }
 
 fun getDownloadFileSizeDescription(contentLength: Long) : String{

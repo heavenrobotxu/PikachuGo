@@ -5,6 +5,7 @@ import android.os.Environment
 import com.damiao.pikachu.Pikachu
 import com.damiao.pikachu.core.*
 import com.damiao.pikachu.core.PKRealDownloadDispatcher
+import okhttp3.OkHttpClient
 
 class PKConfig(
     //最大并发下载任务数量，默认为20
@@ -14,7 +15,9 @@ class PKConfig(
     //线程分发器工厂
     val pkDispatcherFactory: PKDispatcher.Factory = DefaultPkDispatcherFactory(),
     //下载引擎工厂
-    val pkDownloadEngineFactory: PKDownloadEngine.Factory = DefaultPkDownloadEngineFactory()
+    val pkDownloadEngineFactory: PKDownloadEngine.Factory = DefaultPkDownloadEngineFactory(),
+    //下载任务持久化工厂
+    val pkDownloadTaskPersisterFactory: PkDownloadTaskPersister.Factory = DefaultPKDownloadTaskPersisterFactory()
 ) {
     companion object {
 
@@ -34,8 +37,16 @@ class PKConfig(
 
         class DefaultPkDownloadEngineFactory : PKDownloadEngine.Factory {
 
-            override fun createDownloadEngine(pikachu: Pikachu): PKDownloadEngine {
+            override fun createDownloadEngine(
+                pikachu: Pikachu, okHttpClient: OkHttpClient?): PKDownloadEngine {
                 return PKOkHttpDownloadEngine(pikachu)
+            }
+        }
+
+        class DefaultPKDownloadTaskPersisterFactory: PkDownloadTaskPersister.Factory {
+
+            override fun createDownloadTaskPersister(pikachu: Pikachu): PkDownloadTaskPersister {
+                return PKSQLiteDownloadTaskPersister(pikachu)
             }
         }
     }

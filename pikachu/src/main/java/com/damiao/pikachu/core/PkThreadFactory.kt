@@ -1,7 +1,6 @@
 package com.damiao.pikachu.core
 
 import java.util.concurrent.ThreadFactory
-import kotlin.random.Random
 
 class PkThreadFactory : ThreadFactory {
 

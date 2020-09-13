@@ -49,6 +49,7 @@ dependencies {
     implementation 'org.jetbrains.anko:anko:0.10.8'
 
     implementation project(':pikachu')
+    debugImplementation 'damiao.hr:dbviewer:0.0.1'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'

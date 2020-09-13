@@ -2,6 +2,7 @@ package com.damiao.pikachu.core
 
 import com.damiao.pikachu.Pikachu
 import com.damiao.pikachu.common.PKDownloadTask
+import okhttp3.OkHttpClient
 
 //下载引擎接口
 interface PKDownloadEngine {
@@ -11,6 +12,6 @@ interface PKDownloadEngine {
 
     interface Factory {
 
-        fun createDownloadEngine(pikachu: Pikachu) : PKDownloadEngine
+        fun createDownloadEngine(pikachu: Pikachu, okHttpClient: OkHttpClient? = null): PKDownloadEngine
     }
 }

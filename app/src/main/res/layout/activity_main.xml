@@ -54,6 +54,13 @@
         android:max="100"
         />
 
+    <TextView
+        android:id="@+id/tv_a_speed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:layout_marginTop="10dp" />
+
     <Button
         android:id="@+id/btn_b_download"
         android:text="下载"

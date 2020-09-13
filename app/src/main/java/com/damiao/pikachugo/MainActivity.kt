@@ -3,12 +3,16 @@ package com.damiao.pikachugo
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.damiao.pikachu.Pikachu
 import com.damiao.pikachu.common.PKDownloadTask
 import com.damiao.pikachu.common.PKRealDownloadTask
 import com.damiao.pikachu.common.PKTask
 import com.damiao.pikachu.common.PKTaskProcessListener
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.anko.toast
 
 class MainActivity : AppCompatActivity() {
@@ -16,11 +20,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        var task : PKTask? = null
+        var task : PKDownloadTask? = null
 
         btn_a_download.setOnClickListener {
             task = Pikachu.with(this)
-                .url("http://192.168.0.100:8080/download/a.mp4")
+                .url("http://192.168.0.102:8080/download/a.mp4")
                 .taskProcessListener(object : PKTaskProcessListener {
                     override fun onStart(downloadTask: PKDownloadTask) {
                         toast("任务A下载开始啦")
@@ -31,6 +35,7 @@ class MainActivity : AppCompatActivity() {
                             pb_a_process.max = length.toInt()
                         }
                         pb_a_process.progress = process.toInt()
+                        tv_a_speed.text = task?.downloadSpeed
                     }
 
                     override fun onComplete(downloadTask: PKDownloadTask) {
@@ -45,6 +50,12 @@ class MainActivity : AppCompatActivity() {
 
         }
 
+        /*lifecycleScope.launch (Dispatchers.IO){
+            while (true) {
+                delay(1000)
+            }
+        }*/
+
         btn_a_pause.setOnClickListener {
             task?.pause()
         }
@@ -54,7 +65,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         btn_b_download.setOnClickListener {
-            Pikachu.with(this).url("http://192.168.0.100:8080/download/b.mp4")
+            Pikachu.with(this).url("http://192.168.0.102:8080/download/b.mp4")
                 .taskProcessListener(object : PKTaskProcessListener {
                     override fun onStart(downloadTask: PKDownloadTask) {
                         toast("任务B下载开始啦")
@@ -79,7 +90,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         btn_c_download.setOnClickListener {
-            Pikachu.with(this).url("http://192.168.0.100:8080/download/c.mp4")
+            Pikachu.with(this).url("http://192.168.0.102:8080/download/c.mp4")
                 .taskProcessListener(object : PKTaskProcessListener {
                     override fun onStart(downloadTask: PKDownloadTask) {
                         toast("任务C下载开始啦")

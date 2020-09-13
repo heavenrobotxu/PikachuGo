@@ -4,13 +4,13 @@ import com.damiao.pikachu.Pikachu
 import com.damiao.pikachu.common.PKDownloadTask
 import com.damiao.pikachu.common.PKDownloadTaskRequest
 import com.damiao.pikachu.common.PKRealDownloadTask
-import com.damiao.pikachu.util.encodeId
+import com.damiao.pikachu.util.uuid
 import java.util.*
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
-internal class PKRealDownloadDispatcher(pikachu: Pikachu) : PKDispatcher {
+internal class PKRealDownloadDispatcher(private val client: Pikachu) : PKDispatcher {
     //等待执行下载的Task列表
     private val readyTaskList = ArrayDeque<PKDownloadTask>()
 
@@ -21,11 +21,11 @@ internal class PKRealDownloadDispatcher(pikachu: Pikachu) : PKDispatcher {
     private val completeTaskList = ArrayDeque<PKDownloadTask>()
 
     //最大可同时并发下载的任务个数
-    private val maxRunningSize = pikachu.pkConfig.maxConcurrentTaskSize
+    private val maxRunningSize = client.pkConfig.maxConcurrentTaskSize
 
     //下载引擎,惰性加载，promote调用时才从pikachu中获取下载引擎
     private val downloadEngine: PKDownloadEngine by lazy {
-        pikachu.pkDownloadEngine
+        client.pkDownloadEngine
     }
 
     //下载线程池
@@ -36,7 +36,10 @@ internal class PKRealDownloadDispatcher(pikachu: Pikachu) : PKDispatcher {
 
     //将下载任务添加到准备队列中
     override fun enqueue(pkRequest: PKDownloadTaskRequest): PKDownloadTask {
-        val downloadTask = PKRealDownloadTask(pkRequest, encodeId(pkRequest.targetUrl))
+        val downloadTask = PKRealDownloadTask(pkRequest, uuid())
+        //提交到准备队列之前先注册数据库持久器监听其状态变化
+        downloadTask.registerObserver(client.pkDownloadTaskPersister)
+        downloadTask.triggerPersist(isUpdate = false)
         synchronized(this) {
             readyTaskList.add(downloadTask)
         }
