@@ -50,4 +50,8 @@ object Pikachu {
         this.pkConfig = pkConfig
     }
 
+    fun getLocalInterruptedTask() = pkDownloadTaskPersister.getDownloadingTaskList()
+
+    fun getRunningTaskList() = pkDispatcher.gerRunningTaskList()
+
 }

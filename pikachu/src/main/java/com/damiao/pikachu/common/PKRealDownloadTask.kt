@@ -2,6 +2,7 @@ package com.damiao.pikachu.common
 
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
+import com.damiao.pikachu.Pikachu
 import com.damiao.pikachu.util.getDownloadFileSizeDescription
 import okhttp3.internal.notifyAll
 import java.io.File
@@ -41,6 +42,10 @@ class PKRealDownloadTask(
     private var lastCalculateSpeedTime: Long = 0L
     private var lastCalculateProgress: Long = 0L
 
+    override fun submit() {
+        status = PKTask.TASK_STATUS_SUBMITTED
+    }
+
     override fun start() {
         status = PKTask.TASK_STATUS_EXECUTING
         triggerPersist()
@@ -48,30 +53,29 @@ class PKRealDownloadTask(
 
     override fun pause() {
         if (status != PKTask.TASK_STATUS_EXECUTING) {
-            throw UnsupportedOperationException("Download Task can only pause in EXECUTING status")
+            PKLog.error("Download Task can only pause in EXECUTING status")
+            return
         }
         status = PKTask.TASK_STATUS_PAUSE
-        triggerPersist()
-    }
-
-    override fun isPause(): Boolean {
-        return status == PKTask.TASK_STATUS_PAUSE
     }
 
     override fun resume() {
+        if (status == PKTask.TASK_STATUS_READY) {
+            Pikachu.pkDispatcher.enqueue(this)
+            return
+        }
         if (status != PKTask.TASK_STATUS_PAUSE) {
-            throw UnsupportedOperationException("Download Task can only resume in PAUSE status")
+            PKLog.error("Download Task can only resume in PAUSE status")
+            return
         }
         status = PKTask.TASK_STATUS_EXECUTING
-        triggerPersist()
         synchronized(this) {
             notifyAll()
         }
     }
 
     override fun cancel() {
-        status = PKTask.TASK_STATUS_FAIL
-        failType = PKTask.TASK_FAIL_TYPE_CANCEL
+        status = PKTask.TASK_STATUS_CANCEL
         triggerPersist()
     }
 
@@ -105,15 +109,11 @@ class PKRealDownloadTask(
         synchronized(this) {
             progress += appendSize
         }
-        //进度更新时不更新数据库进度信息，否则会造成读写数据库太频繁
+        //进度更新时不更新数据库进度信息，否则会造成读写数据库太频繁而拖慢下载速度
     }
 
     @OnLifecycleEvent(value = Lifecycle.Event.ON_DESTROY)
     override fun cancelListener() {
         pkRequest.taskProcessListener = null
-    }
-
-    fun getDownloadFile(): File? {
-        return downloadResultFile
     }
 }

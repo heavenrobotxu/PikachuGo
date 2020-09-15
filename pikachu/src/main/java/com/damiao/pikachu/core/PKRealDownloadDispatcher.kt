@@ -2,9 +2,6 @@ package com.damiao.pikachu.core
 
 import com.damiao.pikachu.Pikachu
 import com.damiao.pikachu.common.PKDownloadTask
-import com.damiao.pikachu.common.PKDownloadTaskRequest
-import com.damiao.pikachu.common.PKRealDownloadTask
-import com.damiao.pikachu.util.uuid
 import java.util.*
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.ThreadPoolExecutor
@@ -35,16 +32,15 @@ internal class PKRealDownloadDispatcher(private val client: Pikachu) : PKDispatc
     )
 
     //将下载任务添加到准备队列中
-    override fun enqueue(pkRequest: PKDownloadTaskRequest): PKDownloadTask {
-        val downloadTask = PKRealDownloadTask(pkRequest, uuid())
+    override fun enqueue(pkDownloadTask: PKDownloadTask) {
         //提交到准备队列之前先注册数据库持久器监听其状态变化
-        downloadTask.registerObserver(client.pkDownloadTaskPersister)
-        downloadTask.triggerPersist(isUpdate = false)
+        pkDownloadTask.registerObserver(client.pkDownloadTaskPersister)
+        pkDownloadTask.triggerPersist(isUpdate = false)
         synchronized(this) {
-            readyTaskList.add(downloadTask)
+            pkDownloadTask.submit()
+            readyTaskList.add(pkDownloadTask)
         }
         promoteAndExecuteDownloadTask()
-        return downloadTask
     }
 
     //执行准备队列中的下载任务取出并提交给线程池执行
@@ -52,6 +48,11 @@ internal class PKRealDownloadDispatcher(private val client: Pikachu) : PKDispatc
         synchronized(this) {
             while (runningTaskList.size < maxRunningSize && !readyTaskList.isEmpty()) {
                 readyTaskList.pollFirst()?.let {
+                    //若下载任务在提交执行前已经被取消，那么直接完成该下载任务，不进行下载
+                    if (it.isCancel()) {
+                        complete(it)
+                        return@let
+                    }
                     executorService.submit {
                         downloadEngine.download(it)
                     }
@@ -71,6 +72,11 @@ internal class PKRealDownloadDispatcher(private val client: Pikachu) : PKDispatc
         }
         //继续触发执行准备队列中的下载任务
         promoteAndExecuteDownloadTask()
+    }
+
+    @Synchronized
+    override fun gerRunningTaskList(): List<PKDownloadTask> {
+        return runningTaskList.toList()
     }
 
 }

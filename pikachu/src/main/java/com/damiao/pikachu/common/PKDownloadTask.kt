@@ -22,6 +22,9 @@ abstract class PKDownloadTask : PKTask, Observable<PkDownloadTaskPersister>() {
     //更新任务的下载进度
     internal abstract fun changeProgress(appendSize: Long)
 
+    //将任务提交到准备列表
+    internal abstract fun submit()
+
     //开始执行Task
     internal abstract fun start()
 
@@ -30,6 +33,14 @@ abstract class PKDownloadTask : PKTask, Observable<PkDownloadTaskPersister>() {
 
     //内部调用，触发Task失败状态
     internal abstract fun fail(reason: String? = null, exception: RuntimeException? = null)
+
+    override fun isCancel(): Boolean {
+        return status == PKTask.TASK_STATUS_CANCEL
+    }
+
+    override fun isPause(): Boolean {
+        return status == PKTask.TASK_STATUS_PAUSE
+    }
 
     //触发下载任务的持久化
     fun triggerPersist(isUpdate: Boolean = true) {

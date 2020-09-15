@@ -19,6 +19,8 @@ interface PKTask : LifecycleObserver{
     fun pause()
     //Task是否已经暂停
     fun isPause() : Boolean
+    //Task是否已经暂停
+    fun isCancel() : Boolean
     //恢复执行Task
     fun resume()
     //取消Task，中断正在执行的上传、下载行为
@@ -28,13 +30,13 @@ interface PKTask : LifecycleObserver{
 
     companion object {
         const val TASK_STATUS_READY = 0
-        const val TASK_STATUS_EXECUTING = 1
-        const val TASK_STATUS_PAUSE = 2
-        const val TASK_STATUS_RESUME = 3
-        const val TASK_STATUS_COMPLETE = 4
-        const val TASK_STATUS_FAIL = 5
+        const val TASK_STATUS_SUBMITTED = 1
+        const val TASK_STATUS_EXECUTING = 2
+        const val TASK_STATUS_PAUSE = 3
+        const val TASK_STATUS_CANCEL = 4
+        const val TASK_STATUS_COMPLETE = 5
+        const val TASK_STATUS_FAIL = 6
 
-        const val TASK_FAIL_TYPE_CANCEL = 10
         const val TASK_FAIL_TYPE_TIMEOUT = 11
         const val TASK_FAIL_TYPE_COMMON_FAIL = 12
     }

@@ -6,9 +6,11 @@ import com.damiao.pikachu.common.PKDownloadTaskRequest
 
 interface PKDispatcher {
 
-    fun enqueue(pkRequest: PKDownloadTaskRequest) : PKDownloadTask
+    fun enqueue(pkDownloadTask: PKDownloadTask)
 
     fun complete(pkDownloadTask: PKDownloadTask)
+
+    fun gerRunningTaskList() : List<PKDownloadTask>
 
     interface Factory {
 

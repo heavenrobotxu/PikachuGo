@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.anko.toast
+import java.lang.Exception
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,19 +43,13 @@ class MainActivity : AppCompatActivity() {
                         toast("下载完成 ${downloadTask.downloadResultFile?.path}")
                     }
 
-                    override fun onFail(reason: String) {
-                        toast("下载失败，呵呵")
+                    override fun onFail(reason: String, exception: Exception?) {
+                        toast("下载失败，呵呵 $reason")
                     }
                 })
                 .download()
 
         }
-
-        /*lifecycleScope.launch (Dispatchers.IO){
-            while (true) {
-                delay(1000)
-            }
-        }*/
 
         btn_a_pause.setOnClickListener {
             task?.pause()
@@ -64,55 +59,37 @@ class MainActivity : AppCompatActivity() {
             task?.resume()
         }
 
-        btn_b_download.setOnClickListener {
-            Pikachu.with(this).url("http://192.168.0.102:8080/download/b.mp4")
-                .taskProcessListener(object : PKTaskProcessListener {
-                    override fun onStart(downloadTask: PKDownloadTask) {
-                        toast("任务B下载开始啦")
-                    }
+        val interruptedTaskList = Pikachu.getLocalInterruptedTask()
+        for (pkDownloadTask in interruptedTaskList) {
+            pb_a_process.max = pkDownloadTask.contentLength.toInt()
+            pb_a_process.progress = pkDownloadTask.progress.toInt()
+            btn_a_local_resume.setOnClickListener {
+                pkDownloadTask.resume()
+            }
+            pkDownloadTask.pkRequest.taskProcessListener = object : PKTaskProcessListener {
+                override fun onProcess(process: Long, length: Long) {
+                    pb_a_process.progress = process.toInt()
+                    tv_a_speed.text = pkDownloadTask.downloadSpeed
+                }
 
-                    override fun onProcess(process: Long, length: Long) {
-                        if (pb_b_process.max == 100) {
-                            pb_b_process.max = length.toInt()
-                        }
-                        pb_b_process.progress = process.toInt()
-                    }
+                override fun onComplete(downloadTask: PKDownloadTask) {
+                    toast("下载完成 ${downloadTask.downloadResultFile?.path}")
+                }
 
-                    override fun onComplete(downloadTask: PKDownloadTask) {
-                        toast("下载完成 ${downloadTask.downloadResultFile?.path}")
-                    }
+                override fun onFail(reason: String, exception: Exception?) {
+                    toast("下载失败，呵呵 $reason")
+                }
+            }
 
-                    override fun onFail(reason: String) {
-                        toast("下载失败，呵呵")
-                    }
-                })
-                .download()
+            btn_a_pause.setOnClickListener {
+                pkDownloadTask.pause()
+            }
+
+            btn_a_resume.setOnClickListener {
+                pkDownloadTask.resume()
+            }
         }
 
-        btn_c_download.setOnClickListener {
-            Pikachu.with(this).url("http://192.168.0.102:8080/download/c.mp4")
-                .taskProcessListener(object : PKTaskProcessListener {
-                    override fun onStart(downloadTask: PKDownloadTask) {
-                        toast("任务C下载开始啦")
-                    }
-
-                    override fun onProcess(process: Long, length: Long) {
-                        if (pb_c_process.max == 100) {
-                            pb_c_process.max = length.toInt()
-                        }
-                        pb_c_process.progress = process.toInt()
-                    }
-
-                    override fun onComplete(downloadTask: PKDownloadTask) {
-                        toast("下载完成 ${downloadTask.downloadResultFile?.path}")
-                    }
-
-                    override fun onFail(reason: String) {
-                        toast("下载失败，呵呵")
-                    }
-                })
-                .download()
-        }
 
     }
 }

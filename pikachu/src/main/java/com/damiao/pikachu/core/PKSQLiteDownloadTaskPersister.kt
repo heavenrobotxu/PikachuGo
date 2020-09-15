@@ -10,7 +10,7 @@ import androidx.core.database.getLongOrNull
 import androidx.core.database.getStringOrNull
 import com.damiao.pikachu.Pikachu
 import com.damiao.pikachu.common.*
-import com.damiao.pikachu.common.PKLog
+import java.io.File
 import java.util.*
 
 class PKSQLiteDownloadTaskPersister(private val pikachu: Pikachu) : PkDownloadTaskPersister {
@@ -64,13 +64,23 @@ class PKSQLiteDownloadTaskPersister(private val pikachu: Pikachu) : PkDownloadTa
         )
     }
 
+    @Synchronized
+    override fun deleteDownloadTask(downloadTask: PKDownloadTask) {
+        dbHelper.writableDatabase.delete(PK_TABLE_TASK_NAME,
+            "$PK_TABLE_TASK_COLUMN_TASK_ID =?", arrayOf(downloadTask.taskId))
+    }
+
     //查询当前数据库中还未下载完成的任务
     @Synchronized
     override fun getDownloadingTaskList(): List<PKDownloadTask> {
         val cursor = dbHelper.readableDatabase.query(
             PK_TABLE_TASK_NAME, null,
-            "$PK_TABLE_TASK_COLUMN_TASK_STATUS = ?",
-            arrayOf("${PKTask.TASK_STATUS_EXECUTING}"), null, null, null
+            "$PK_TABLE_TASK_COLUMN_TASK_STATUS = ? OR " +
+                    "$PK_TABLE_TASK_COLUMN_TASK_STATUS = ? OR " +
+                    "$PK_TABLE_TASK_COLUMN_TASK_STATUS = ?" ,
+            arrayOf("${PKTask.TASK_STATUS_EXECUTING}",
+                "${PKTask.TASK_STATUS_PAUSE}",
+                "${PKTask.TASK_STATUS_SUBMITTED}"), null, null, null
         )
         return getTaskListFromCursor(cursor)
     }
@@ -103,18 +113,19 @@ class PKSQLiteDownloadTaskPersister(private val pikachu: Pikachu) : PkDownloadTa
             if (!it.moveToFirst()) return result
             do {
                 val taskId = it.getString(it.getColumnIndex(PK_TABLE_TASK_COLUMN_TASK_ID))
-                val progress =
-                    it.getLongOrNull(it.getColumnIndex(PK_TABLE_TASK_COLUMN_TASK_PROGRESS))
                 val contentLength =
                     it.getLongOrNull(it.getColumnIndex(PK_TABLE_TASK_COLUMN_TASK_CONTENT_LENGTH))
                 val status = it.getInt(it.getColumnIndex(PK_TABLE_TASK_COLUMN_TASK_STATUS))
-                val downFileName = it.getStringOrNull(
+                val downloadFileName = it.getStringOrNull(
                     it.getColumnIndex(
                         PK_TABLE_TASK_COLUMN_TASK_DOWNLOAD_FILE_NAME
                     )
                 )
-                val versionTagId = it.getStringOrNull(it.getColumnIndex(
-                    PK_TABLE_TASK_COLUMN_TASK_VERSION_TAG_ID))
+                val versionTagId = it.getStringOrNull(
+                    it.getColumnIndex(
+                        PK_TABLE_TASK_COLUMN_TASK_VERSION_TAG_ID
+                    )
+                )
                 val failType =
                     it.getIntOrNull(it.getColumnIndex(PK_TABLE_TASK_COLUMN_TASK_FAIL_TYPE))
                 val failMessage = it.getStringOrNull(
@@ -133,15 +144,24 @@ class PKSQLiteDownloadTaskPersister(private val pikachu: Pikachu) : PkDownloadTa
                 val task = PKRealDownloadTask(
                     downloadRequest,
                     taskId = taskId,
-                    downloadFileName = downFileName
+                    downloadFileName = downloadFileName
                 )
-                task.progress = progress ?: 0
+                task.progress = 0
+                downloadFileName?.let { name ->
+                    val localFile = File(localPath, name)
+                    if (localFile.exists()) {
+                        //若本地文件存在，则直接使用本地文件的length作为已下载的progress值，若本地文件被删除或不存在，则progress为0
+                        //任务从0开始重新下载
+                        task.progress = localFile.length()
+                    }
+                }
                 task.contentLength = contentLength ?: 0
-                task.status = status
+                //从数据库查询到的task status需要被重置回ready状态
+                task.status = PKTask.TASK_STATUS_READY
                 task.failType = failType
                 task.failMessage = failMessage
                 task.versionTagId = versionTagId
-
+                result.add(task)
             } while (it.moveToNext())
         }
         return result

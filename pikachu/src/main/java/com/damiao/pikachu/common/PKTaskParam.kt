@@ -1,8 +1,8 @@
 package com.damiao.pikachu.common
 
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import com.damiao.pikachu.Pikachu
+import com.damiao.pikachu.util.uuid
 import java.io.File
 
 class PKTaskParam(
@@ -37,9 +37,10 @@ class PKTaskParam(
         }
         val downloadRequest =
             PKDownloadTaskRequest(this.url, targetDirectorPath, taskProcessListener)
-        return client.pkDispatcher.enqueue(downloadRequest).apply {
-            lifecycle.lifecycle.addObserver(this)
-        }
+        val downloadTask = PKRealDownloadTask(downloadRequest, uuid())
+        lifecycle.lifecycle.addObserver(downloadTask)
+        client.pkDispatcher.enqueue(downloadTask)
+        return downloadTask
     }
 
     //校验构建的任务参数是否合法
