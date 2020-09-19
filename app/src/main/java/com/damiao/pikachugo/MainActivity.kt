@@ -1,95 +1,65 @@
 package com.damiao.pikachugo
 
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.damiao.pikachu.Pikachu
 import com.damiao.pikachu.common.PKDownloadTask
-import com.damiao.pikachu.common.PKRealDownloadTask
-import com.damiao.pikachu.common.PKTask
 import com.damiao.pikachu.common.PKTaskProcessListener
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.anko.toast
 import java.lang.Exception
 
 class MainActivity : AppCompatActivity() {
+
+    private var taskIndex = 0
+
+    private val downloadTaskList =
+        mutableListOf<PKDownloadTask>()
+
+    private val downloadTaskAdapter: DownloadTaskListAdapter by lazy {
+        DownloadTaskListAdapter(downloadTaskList)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        var task : PKDownloadTask? = null
+        downloadTaskList.addAll(Pikachu.getLocalTask())
 
-        btn_a_download.setOnClickListener {
-            task = Pikachu.with(this)
-                .url("http://192.168.0.102:8080/download/a.mp4")
-                .taskProcessListener(object : PKTaskProcessListener {
-                    override fun onStart(downloadTask: PKDownloadTask) {
-                        toast("任务A下载开始啦")
-                    }
+        rv_main_download_list.setHasFixedSize(true)
+        rv_main_download_list.layoutManager = LinearLayoutManager(this)
+        downloadTaskAdapter.setHasStableIds(true)
+        rv_main_download_list.adapter = downloadTaskAdapter
 
-                    override fun onProcess(process: Long, length: Long) {
-                        if (pb_a_process.max == 100) {
-                            pb_a_process.max = length.toInt()
-                        }
-                        pb_a_process.progress = process.toInt()
-                        tv_a_speed.text = task?.downloadSpeed
-                    }
-
-                    override fun onComplete(downloadTask: PKDownloadTask) {
-                        toast("下载完成 ${downloadTask.downloadResultFile?.path}")
-                    }
-
-                    override fun onFail(reason: String, exception: Exception?) {
-                        toast("下载失败，呵呵 $reason")
-                    }
-                })
+        iv_main_add_new_task.setOnClickListener {
+            val task = Pikachu.with(this)
+                .url(DEFAULT_TASK_URL[taskIndex])
                 .download()
-
+            downloadTaskList.add(0, task)
+            downloadTaskAdapter.notifyItemInserted(0)
+            taskIndex++
         }
+        Pikachu.addGlobalTaskProcessListener(object : PKTaskProcessListener {
 
-        btn_a_pause.setOnClickListener {
-            task?.pause()
-        }
-
-        btn_a_resume.setOnClickListener {
-            task?.resume()
-        }
-
-        val interruptedTaskList = Pikachu.getLocalInterruptedTask()
-        for (pkDownloadTask in interruptedTaskList) {
-            pb_a_process.max = pkDownloadTask.contentLength.toInt()
-            pb_a_process.progress = pkDownloadTask.progress.toInt()
-            btn_a_local_resume.setOnClickListener {
-                pkDownloadTask.resume()
-            }
-            pkDownloadTask.pkRequest.taskProcessListener = object : PKTaskProcessListener {
-                override fun onProcess(process: Long, length: Long) {
-                    pb_a_process.progress = process.toInt()
-                    tv_a_speed.text = pkDownloadTask.downloadSpeed
-                }
-
-                override fun onComplete(downloadTask: PKDownloadTask) {
-                    toast("下载完成 ${downloadTask.downloadResultFile?.path}")
-                }
-
-                override fun onFail(reason: String, exception: Exception?) {
-                    toast("下载失败，呵呵 $reason")
-                }
+            override fun onProcess(process: Long, length: Long, taskId: String) {
+                downloadTaskAdapter
+                    .notifyItemChanged(downloadTaskList.indexOf(downloadTaskList.find { it.taskId == taskId }))
             }
 
-            btn_a_pause.setOnClickListener {
-                pkDownloadTask.pause()
+            override fun onComplete(taskId: String) {
+                downloadTaskAdapter
+                    .notifyItemChanged(downloadTaskList.indexOf(downloadTaskList.find { it.taskId == taskId }))
             }
 
-            btn_a_resume.setOnClickListener {
-                pkDownloadTask.resume()
+            override fun onCancel(taskId: String) {
+                downloadTaskAdapter
+                    .notifyItemChanged(downloadTaskList.indexOf(downloadTaskList.find { it.taskId == taskId }))
             }
-        }
-
-
+        })
     }
+
 }

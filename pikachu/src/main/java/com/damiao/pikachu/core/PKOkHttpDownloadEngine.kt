@@ -73,7 +73,10 @@ class PKOkHttpDownloadEngine(
                 val fileSink = if (appendWrite) targetFile.appendingSink() else targetFile.sink()
                 val targetBufferedSink = fileSink.buffer()
                 mainHandler.post {
-                    downloadTask.pkRequest.taskProcessListener?.onStart(downloadTask)
+                    downloadTask.pkRequest.taskProcessListener?.onStart(downloadTask.taskId)
+                    client.pkGlobalTaskProcessListenerList.forEach {listener ->
+                        listener.onStart(downloadTask.taskId)
+                    }
                 }
                 downloadTask.triggerPersist()
                 var remainingSize = it.contentLength()
@@ -93,6 +96,14 @@ class PKOkHttpDownloadEngine(
                     synchronized(downloadTask) {
                         while (downloadTask.isPause()) {
                             downloadTask.wait()
+                            if (downloadTask.isCancel()) {
+                                fileSink.closeQuietly()
+                                targetBufferedSink.closeQuietly()
+                                bodySource.closeQuietly()
+                                client.pkDispatcher.complete(downloadTask)
+                                targetFile.delete()
+                                throw PKTaskCanceledException()
+                            }
                             fileSink.closeQuietly()
                             targetBufferedSink.closeQuietly()
                             bodySource.closeQuietly()
@@ -116,8 +127,13 @@ class PKOkHttpDownloadEngine(
                         downloadTask.changeProgress(array.size.toLong())
                         mainHandler.post {
                             downloadTask.pkRequest.taskProcessListener?.onProcess(
-                                downloadTask.progress, it.contentLength()
+                                downloadTask.progress, it.contentLength(), downloadTask.taskId
                             )
+                            client.pkGlobalTaskProcessListenerList.forEach {listener ->
+                                listener.onProcess(
+                                    downloadTask.progress, it.contentLength(), downloadTask.taskId
+                                )
+                            }
                         }
                     } else {
                         break
@@ -130,7 +146,10 @@ class PKOkHttpDownloadEngine(
                 PKLog.debug("下载完成的目标文件大小为${targetFile.length()}")
                 downloadTask.success()
                 mainHandler.post {
-                    downloadTask.pkRequest.taskProcessListener?.onComplete(downloadTask)
+                    downloadTask.pkRequest.taskProcessListener?.onComplete(downloadTask.taskId)
+                    client.pkGlobalTaskProcessListenerList.forEach {listener ->
+                        listener.onComplete(downloadTask.taskId)
+                    }
                 }
                 client.pkDispatcher.complete(downloadTask)
 
@@ -140,6 +159,10 @@ class PKOkHttpDownloadEngine(
             download(downloadTask)
         } catch (canceledException: PKTaskCanceledException) {
             PKLog.debug("任务被取消，停止该任务的下载")
+            downloadTask.pkRequest.taskProcessListener?.onCancel(downloadTask.taskId)
+            client.pkGlobalTaskProcessListenerList.forEach {listener ->
+                listener.onCancel(downloadTask.taskId)
+            }
             client.pkDispatcher.complete(downloadTask)
         } catch (e: Exception) {
             PKLog.error("download fail ${e.message}")
@@ -148,8 +171,14 @@ class PKOkHttpDownloadEngine(
             mainHandler.post {
                 downloadTask.pkRequest.taskProcessListener?.onFail(
                     "download execute fail by exception ${e.message}",
-                    e
+                    e, downloadTask.taskId
                 )
+                client.pkGlobalTaskProcessListenerList.forEach {listener ->
+                    listener.onFail(
+                        "download execute fail by exception ${e.message}",
+                        e, downloadTask.taskId
+                    )
+                }
             }
         }
     }

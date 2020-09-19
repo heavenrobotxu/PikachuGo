@@ -2,7 +2,10 @@ package com.damiao.pikachu.core
 
 import com.damiao.pikachu.Pikachu
 import com.damiao.pikachu.common.PKDownloadTask
+import com.damiao.pikachu.common.PKRealDownloadTask
+import com.damiao.pikachu.util.getDownloadFileSizeDescription
 import java.util.*
+import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -24,6 +27,12 @@ internal class PKRealDownloadDispatcher(private val client: Pikachu) : PKDispatc
     private val downloadEngine: PKDownloadEngine by lazy {
         client.pkDownloadEngine
     }
+    //task下载速度监听单线程池，定时计算所有下载任务的当前速度
+    private val speedWatchExecutor = Executors.newSingleThreadExecutor()
+
+    init {
+        startCalculateTaskSpeed()
+    }
 
     //下载线程池
     private val executorService = ThreadPoolExecutor(
@@ -40,6 +49,18 @@ internal class PKRealDownloadDispatcher(private val client: Pikachu) : PKDispatc
             pkDownloadTask.submit()
             readyTaskList.add(pkDownloadTask)
         }
+        promoteAndExecuteDownloadTask()
+    }
+
+    //将执行完成的下载任务从正在执行列表中删除
+    override fun complete(pkDownloadTask: PKDownloadTask) {
+        synchronized(this) {
+            runningTaskList.remove(pkDownloadTask)
+            if (!completeTaskList.contains(pkDownloadTask)) {
+                completeTaskList.add(pkDownloadTask)
+            }
+        }
+        //继续触发执行准备队列中的下载任务
         promoteAndExecuteDownloadTask()
     }
 
@@ -62,17 +83,36 @@ internal class PKRealDownloadDispatcher(private val client: Pikachu) : PKDispatc
         }
     }
 
-    //将执行完成的下载任务从正在执行列表中删除
-    override fun complete(pkDownloadTask: PKDownloadTask) {
-        synchronized(this) {
-            runningTaskList.remove(pkDownloadTask)
-            if (!completeTaskList.contains(pkDownloadTask)) {
-                completeTaskList.add(pkDownloadTask)
+    //开启任务下载速度计算线程，定时计算并更新所有正在下载中的task下载速度
+    private fun startCalculateTaskSpeed() {
+        speedWatchExecutor.submit {
+            while (true) {
+                Thread.sleep(500)
+                synchronized(this) {
+                    if (!runningTaskList.isEmpty()) {
+                        for (pkDownloadTask in runningTaskList) {
+                            val realTask = pkDownloadTask as PKRealDownloadTask
+                            val now = System.currentTimeMillis()
+                            if (realTask.lastCalculateSpeedTime == -1L) {
+                                realTask.lastCalculateSpeedTime = now
+                                realTask.lastCalculateProgress = realTask.progress
+                                continue
+                            } else {
+                                val duration = now - realTask.lastCalculateSpeedTime
+                                if (duration >= 1000) {
+                                    realTask.downloadSpeed = "${getDownloadFileSizeDescription(realTask.progress
+                                            - realTask.lastCalculateProgress)}/s"
+                                    realTask.lastCalculateSpeedTime = now
+                                    realTask.lastCalculateProgress = realTask.progress
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
-        //继续触发执行准备队列中的下载任务
-        promoteAndExecuteDownloadTask()
     }
+
 
     @Synchronized
     override fun gerRunningTaskList(): List<PKDownloadTask> {

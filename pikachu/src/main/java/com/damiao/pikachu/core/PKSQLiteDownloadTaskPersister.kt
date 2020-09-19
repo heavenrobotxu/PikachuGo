@@ -66,8 +66,10 @@ class PKSQLiteDownloadTaskPersister(private val pikachu: Pikachu) : PkDownloadTa
 
     @Synchronized
     override fun deleteDownloadTask(downloadTask: PKDownloadTask) {
-        dbHelper.writableDatabase.delete(PK_TABLE_TASK_NAME,
-            "$PK_TABLE_TASK_COLUMN_TASK_ID =?", arrayOf(downloadTask.taskId))
+        dbHelper.writableDatabase.delete(
+            PK_TABLE_TASK_NAME,
+            "$PK_TABLE_TASK_COLUMN_TASK_ID =?", arrayOf(downloadTask.taskId)
+        )
     }
 
     //查询当前数据库中还未下载完成的任务
@@ -77,10 +79,12 @@ class PKSQLiteDownloadTaskPersister(private val pikachu: Pikachu) : PkDownloadTa
             PK_TABLE_TASK_NAME, null,
             "$PK_TABLE_TASK_COLUMN_TASK_STATUS = ? OR " +
                     "$PK_TABLE_TASK_COLUMN_TASK_STATUS = ? OR " +
-                    "$PK_TABLE_TASK_COLUMN_TASK_STATUS = ?" ,
-            arrayOf("${PKTask.TASK_STATUS_EXECUTING}",
+                    "$PK_TABLE_TASK_COLUMN_TASK_STATUS = ?",
+            arrayOf(
+                "${PKTask.TASK_STATUS_EXECUTING}",
                 "${PKTask.TASK_STATUS_PAUSE}",
-                "${PKTask.TASK_STATUS_SUBMITTED}"), null, null, null
+                "${PKTask.TASK_STATUS_SUBMITTED}"
+            ), null, null, null
         )
         return getTaskListFromCursor(cursor)
     }
@@ -107,7 +111,9 @@ class PKSQLiteDownloadTaskPersister(private val pikachu: Pikachu) : PkDownloadTa
         return if (result.isEmpty()) null else result[0]
     }
 
-    private fun getTaskListFromCursor(cursor: Cursor): List<PKDownloadTask> {
+    private fun getTaskListFromCursor(
+        cursor: Cursor
+    ): List<PKDownloadTask> {
         val result = LinkedList<PKDownloadTask>()
         cursor.use {
             if (!it.moveToFirst()) return result
@@ -153,11 +159,21 @@ class PKSQLiteDownloadTaskPersister(private val pikachu: Pikachu) : PkDownloadTa
                         //若本地文件存在，则直接使用本地文件的length作为已下载的progress值，若本地文件被删除或不存在，则progress为0
                         //任务从0开始重新下载
                         task.progress = localFile.length()
+                        if (localFile.length() == contentLength) {
+                            //本地文件大小与下载总大小相同，说明当前文件已经下载完成
+                            task.downloadResultFile = localFile
+                        }
                     }
                 }
                 task.contentLength = contentLength ?: 0
-                //从数据库查询到的task status需要被重置回ready状态
-                task.status = PKTask.TASK_STATUS_READY
+                //假如入库时当前task已经在执行下载，则将status设置为被中断
+                if (status == PKTask.TASK_STATUS_SUBMITTED || status == PKTask.TASK_STATUS_PAUSE ||
+                    status == PKTask.TASK_STATUS_EXECUTING
+                ) {
+                    task.status = PKTask.TASK_STATUS_INTERRUPTED
+                } else {
+                    task.status = status
+                }
                 task.failType = failType
                 task.failMessage = failMessage
                 task.versionTagId = versionTagId

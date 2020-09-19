@@ -39,8 +39,10 @@ class PKRealDownloadTask(
 
     override var downloadSpeed: String? = null
 
-    private var lastCalculateSpeedTime: Long = 0L
-    private var lastCalculateProgress: Long = 0L
+    @Volatile
+    var lastCalculateSpeedTime: Long = -1L
+    @Volatile
+    var lastCalculateProgress: Long = -1L
 
     override fun submit() {
         status = PKTask.TASK_STATUS_SUBMITTED
@@ -60,12 +62,12 @@ class PKRealDownloadTask(
     }
 
     override fun resume() {
-        if (status == PKTask.TASK_STATUS_READY) {
+        if (status == PKTask.TASK_STATUS_INTERRUPTED) {
             Pikachu.pkDispatcher.enqueue(this)
             return
         }
         if (status != PKTask.TASK_STATUS_PAUSE) {
-            PKLog.error("Download Task can only resume in PAUSE status")
+            PKLog.error("Downloading Task can only resume in PAUSE status")
             return
         }
         status = PKTask.TASK_STATUS_EXECUTING
@@ -75,8 +77,23 @@ class PKRealDownloadTask(
     }
 
     override fun cancel() {
-        status = PKTask.TASK_STATUS_CANCEL
-        triggerPersist()
+        if (status <= PKTask.TASK_STATUS_SUBMITTED) {
+            pkRequest.taskProcessListener?.onCancel(taskId)
+            Pikachu.pkDispatcher.complete(this)
+            Pikachu.pkGlobalTaskProcessListenerList.forEach {
+                it.onCancel(taskId)
+            }
+            status = PKTask.TASK_STATUS_CANCEL
+            triggerPersist()
+            return
+        }
+        if (isPause()) {
+            synchronized(this) {
+                status = PKTask.TASK_STATUS_CANCEL
+                triggerPersist()
+                notifyAll()
+            }
+        }
     }
 
     override fun fail(reason: String?, exception: RuntimeException?) {
@@ -92,20 +109,6 @@ class PKRealDownloadTask(
     }
 
     override fun changeProgress(appendSize: Long) {
-        //下载速度计算
-        if (lastCalculateSpeedTime == 0L) {
-            lastCalculateSpeedTime = System.currentTimeMillis()
-
-        } else {
-            //每隔一秒更新一次下载速度
-            val now = System.currentTimeMillis()
-            if (now - lastCalculateSpeedTime >= 1000) {
-                downloadSpeed =
-                    "${getDownloadFileSizeDescription(progress - lastCalculateProgress)}/s"
-                lastCalculateProgress = progress
-                lastCalculateSpeedTime = now
-            }
-        }
         synchronized(this) {
             progress += appendSize
         }

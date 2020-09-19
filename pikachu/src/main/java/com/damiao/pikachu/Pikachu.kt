@@ -2,10 +2,8 @@ package com.damiao.pikachu
 
 import android.app.Application
 import androidx.lifecycle.LifecycleOwner
-import com.damiao.pikachu.common.PKConfig
+import com.damiao.pikachu.common.*
 import com.damiao.pikachu.common.PKLog
-import com.damiao.pikachu.common.PKRealDownloadTask
-import com.damiao.pikachu.common.PKTaskParam
 import com.damiao.pikachu.core.PKDispatcher
 import com.damiao.pikachu.core.PKDownloadEngine
 import com.damiao.pikachu.core.PkDownloadTaskPersister
@@ -27,6 +25,8 @@ object Pikachu {
         pkConfig.pkDownloadTaskPersisterFactory.createDownloadTaskPersister(this)
     }
 
+    val pkGlobalTaskProcessListenerList: MutableList<PKTaskProcessListener> = mutableListOf()
+
     fun with(lifecycle: LifecycleOwner): PKTaskParam {
         if (!isInit) {
             PKLog.error("Pikachu must be init before use")
@@ -44,7 +44,7 @@ object Pikachu {
         pkConfig = PKConfig.defaultConfig(context)
     }
 
-    fun initWithConfig(context:Application, pkConfig: PKConfig) {
+    fun initWithConfig(context: Application, pkConfig: PKConfig) {
         isInit = true
         app = context
         this.pkConfig = pkConfig
@@ -52,6 +52,22 @@ object Pikachu {
 
     fun getLocalInterruptedTask() = pkDownloadTaskPersister.getDownloadingTaskList()
 
+    fun getLocalTask() = pkDownloadTaskPersister.getDownloadTaskList()
+
     fun getRunningTaskList() = pkDispatcher.gerRunningTaskList()
 
+    fun addGlobalTaskProcessListener(listener: PKTaskProcessListener) {
+        pkGlobalTaskProcessListenerList.add(listener)
+    }
+
+    fun removeGlobalTaskProcessListener(listener: PKTaskProcessListener) {
+        pkGlobalTaskProcessListenerList.remove(listener)
+    }
+
+    fun deleteLocalTask(downloadTask: PKDownloadTask, deleteFile : Boolean = false) {
+        if (deleteFile) {
+            downloadTask.downloadResultFile?.delete()
+        }
+        pkDownloadTaskPersister.deleteDownloadTask(downloadTask)
+    }
 }

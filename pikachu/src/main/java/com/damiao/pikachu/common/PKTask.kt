@@ -29,6 +29,7 @@ interface PKTask : LifecycleObserver{
     fun cancelListener()
 
     companion object {
+        const val TASK_STATUS_INTERRUPTED = -1
         const val TASK_STATUS_READY = 0
         const val TASK_STATUS_SUBMITTED = 1
         const val TASK_STATUS_EXECUTING = 2
@@ -36,6 +37,7 @@ interface PKTask : LifecycleObserver{
         const val TASK_STATUS_CANCEL = 4
         const val TASK_STATUS_COMPLETE = 5
         const val TASK_STATUS_FAIL = 6
+
 
         const val TASK_FAIL_TYPE_TIMEOUT = 11
         const val TASK_FAIL_TYPE_COMMON_FAIL = 12
