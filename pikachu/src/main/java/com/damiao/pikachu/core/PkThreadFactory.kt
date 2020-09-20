@@ -2,7 +2,7 @@ package com.damiao.pikachu.core
 
 import java.util.concurrent.ThreadFactory
 
-class PkThreadFactory : ThreadFactory {
+internal class PkThreadFactory : ThreadFactory {
 
     private var count = 0
 

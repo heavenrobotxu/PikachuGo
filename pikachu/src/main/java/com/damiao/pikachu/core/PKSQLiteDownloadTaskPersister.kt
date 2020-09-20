@@ -13,7 +13,7 @@ import com.damiao.pikachu.common.*
 import java.io.File
 import java.util.*
 
-class PKSQLiteDownloadTaskPersister(private val pikachu: Pikachu) : PkDownloadTaskPersister {
+internal class PKSQLiteDownloadTaskPersister(private val pikachu: Pikachu) : PkDownloadTaskPersister {
 
     private val dbHelper: PKDownloadTaskDbOpenHelper = PKDownloadTaskDbOpenHelper(pikachu.app)
 

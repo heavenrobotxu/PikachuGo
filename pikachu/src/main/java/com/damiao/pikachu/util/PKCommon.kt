@@ -10,11 +10,11 @@ const val KB = 1024
 const val MB = 1024 * 1024
 const val GB = 1024 * 1024 * 1024
 
-fun uuid(): String {
+internal fun uuid(): String {
     return UUID.randomUUID().toString()
 }
 
-fun String.sha1() : String{
+internal fun String.sha1() : String{
     return this.encodeUtf8().sha1().hex()
 }
 
@@ -29,7 +29,7 @@ fun getDownloadFileSizeDescription(contentLength: Long) : String{
     }
 }
 
-fun closeAll(vararg close: Closeable?) {
+internal fun closeAll(vararg close: Closeable?) {
     for (closeable in close) {
         closeable?.closeQuietly()
     }

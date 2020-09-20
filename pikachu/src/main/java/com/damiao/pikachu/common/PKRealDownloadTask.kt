@@ -8,15 +8,12 @@ import okhttp3.internal.notifyAll
 import java.io.File
 import java.lang.UnsupportedOperationException
 
-class PKRealDownloadTask(
+internal class PKRealDownloadTask(
     override val pkRequest: PKDownloadTaskRequest,
     override val taskId: String,
     @Volatile
     override var downloadFileName: String? = null
 ) : PKDownloadTask() {
-
-    @Volatile
-    override var taskAlreadyDone = false
 
     @Volatile
     override var downloadResultFile: File? = null
@@ -40,9 +37,9 @@ class PKRealDownloadTask(
     override var downloadSpeed: String? = null
 
     @Volatile
-    var lastCalculateSpeedTime: Long = -1L
+    internal var lastCalculateSpeedTime: Long = -1L
     @Volatile
-    var lastCalculateProgress: Long = -1L
+    internal var lastCalculateProgress: Long = -1L
 
     override fun submit() {
         status = PKTask.TASK_STATUS_SUBMITTED
@@ -115,8 +112,10 @@ class PKRealDownloadTask(
         //进度更新时不更新数据库进度信息，否则会造成读写数据库太频繁而拖慢下载速度
     }
 
+    //当监听任务进度的组件（如Activity）被销毁时，及时移除监听，防止下载线程长时间持有对已销毁的组件的引用导致无法回收
     @OnLifecycleEvent(value = Lifecycle.Event.ON_DESTROY)
     override fun cancelListener() {
+        PKLog.debug("listener component finished , set the listener null")
         pkRequest.taskProcessListener = null
     }
 }

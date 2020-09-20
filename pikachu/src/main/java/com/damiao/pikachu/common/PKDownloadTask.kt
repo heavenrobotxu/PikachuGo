@@ -9,8 +9,6 @@ abstract class PKDownloadTask : PKTask, Observable<PkDownloadTaskPersister>() {
 
     abstract val pkRequest: PKDownloadTaskRequest
 
-    abstract var taskAlreadyDone: Boolean
-
     abstract var downloadResultFile: File?
 
     abstract var downloadFileName: String?
@@ -43,7 +41,7 @@ abstract class PKDownloadTask : PKTask, Observable<PkDownloadTaskPersister>() {
     }
 
     //触发下载任务的持久化
-    fun triggerPersist(isUpdate: Boolean = true) {
+    internal fun triggerPersist(isUpdate: Boolean = true) {
         for (mObserver in mObservers) {
             if (isUpdate) mObserver.updateDownloadTask(this)
             else mObserver.saveDownloadTask(this)

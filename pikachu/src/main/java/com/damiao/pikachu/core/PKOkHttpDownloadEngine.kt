@@ -20,7 +20,7 @@ import okhttp3.internal.wait
 import okio.*
 import java.io.File
 
-class PKOkHttpDownloadEngine(
+internal class PKOkHttpDownloadEngine(
     private val client: Pikachu,
     private val okHttpClient: OkHttpClient = OkHttpClient()
 ) : PKDownloadEngine {

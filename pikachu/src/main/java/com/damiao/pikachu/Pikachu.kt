@@ -1,6 +1,9 @@
 package com.damiao.pikachu
 
 import android.app.Application
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.damiao.pikachu.common.*
 import com.damiao.pikachu.common.PKLog
@@ -54,10 +57,16 @@ object Pikachu {
 
     fun getLocalTask() = pkDownloadTaskPersister.getDownloadTaskList()
 
-    fun getRunningTaskList() = pkDispatcher.gerRunningTaskList()
+    fun getExecutingTaskList() = pkDispatcher.gerRunningTaskList()
 
-    fun addGlobalTaskProcessListener(listener: PKTaskProcessListener) {
+    fun addGlobalTaskProcessListener(listener: PKTaskProcessListener, lifecycle: LifecycleOwner) {
         pkGlobalTaskProcessListenerList.add(listener)
+        lifecycle.lifecycle.addObserver(LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_DESTROY) {
+                PKLog.debug("listener component finished , remove the listener")
+                removeGlobalTaskProcessListener(listener)
+            }
+        })
     }
 
     fun removeGlobalTaskProcessListener(listener: PKTaskProcessListener) {

@@ -1,5 +1,6 @@
 package com.damiao.pikachu.common
 
+import android.os.Environment
 import androidx.lifecycle.LifecycleOwner
 import com.damiao.pikachu.Pikachu
 import com.damiao.pikachu.util.uuid
@@ -54,9 +55,17 @@ class PKTaskParam(
             return false
         }
         val file = File(targetDirectorPath)
-        if (!file.exists() || !file.isDirectory) {
-            PKLog.error("targetDirectorPath must exists and is a directory")
-            return false
+        if (!file.exists()) {
+            PKLog.info("target directory not exist , pikachu will try to create")
+            if (!file.mkdirs()) {
+                PKLog.error("create target directory fail, please ensure you have read/write storage permission")
+                return false
+            }
+        } else {
+            if (!file.isDirectory) {
+                PKLog.error("targetDirectorPath must exists and is a directory")
+                return false
+            }
         }
         return true
     }
