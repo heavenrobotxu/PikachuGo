@@ -11,6 +11,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.anko.toast
 import java.lang.Exception
 
 class MainActivity : AppCompatActivity() {
@@ -23,6 +24,8 @@ class MainActivity : AppCompatActivity() {
     private val downloadTaskAdapter: DownloadTaskListAdapter by lazy {
         DownloadTaskListAdapter(downloadTaskList)
     }
+
+    private lateinit var taskListener: PKTaskProcessListener
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,7 +46,7 @@ class MainActivity : AppCompatActivity() {
             downloadTaskAdapter.notifyItemInserted(0)
             taskIndex++
         }
-        Pikachu.addGlobalTaskProcessListener(object : PKTaskProcessListener {
+        taskListener = object : PKTaskProcessListener {
 
             override fun onProcess(process: Long, length: Long, taskId: String) {
                 downloadTaskAdapter
@@ -59,7 +62,19 @@ class MainActivity : AppCompatActivity() {
                 downloadTaskAdapter
                     .notifyItemChanged(downloadTaskList.indexOf(downloadTaskList.find { it.taskId == taskId }))
             }
-        })
+
+            override fun onFail(reason: String, exception: Exception?, taskId: String) {
+                toast("任务下载失败 $reason")
+                downloadTaskAdapter
+                    .notifyItemChanged(downloadTaskList.indexOf(downloadTaskList.find { it.taskId == taskId }))
+            }
+        }
+        Pikachu.addGlobalTaskProcessListener(taskListener)
+    }
+
+    override fun onDestroy() {
+        Pikachu.removeGlobalTaskProcessListener(taskListener)
+        super.onDestroy()
     }
 
 }

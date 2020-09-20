@@ -1,6 +1,8 @@
 package com.damiao.pikachu.util
 
+import okhttp3.internal.closeQuietly
 import okio.ByteString.Companion.encodeUtf8
+import java.io.Closeable
 import java.math.BigDecimal
 import java.util.*
 
@@ -24,5 +26,11 @@ fun getDownloadFileSizeDescription(contentLength: Long) : String{
         contentLength >= GB -> "${(contentLength.toDouble() / GB).toBigDecimal()
             .setScale(2, BigDecimal.ROUND_DOWN)}GB"
         else -> "unknown"
+    }
+}
+
+fun closeAll(vararg close: Closeable?) {
+    for (closeable in close) {
+        closeable?.closeQuietly()
     }
 }

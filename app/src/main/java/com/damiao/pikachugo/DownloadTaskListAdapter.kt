@@ -53,6 +53,7 @@ class DownloadTaskListAdapter(private val downloadTaskList: MutableList<PKDownlo
     override fun onBindViewHolder(holder: DownloadTaskViewHolder, position: Int) {
         val downloadTask = downloadTaskList[position]
         stateMap[downloadTask.status]?.change(
+            holder,
             holder.itemView, position,
             downloadTask, this
         )
@@ -63,6 +64,7 @@ class DownloadTaskListAdapter(private val downloadTaskList: MutableList<PKDownlo
     abstract class StateBehavior {
 
         abstract fun change(
+            holder: DownloadTaskViewHolder,
             itemView: View,
             p: Int,
             downloadTask: PKDownloadTask,
@@ -73,6 +75,7 @@ class DownloadTaskListAdapter(private val downloadTaskList: MutableList<PKDownlo
     class ReadyStateBehavior : StateBehavior() {
 
         override fun change(
+            holder: DownloadTaskViewHolder,
             itemView: View,
             p: Int,
             downloadTask: PKDownloadTask,
@@ -98,6 +101,7 @@ class DownloadTaskListAdapter(private val downloadTaskList: MutableList<PKDownlo
 
         @SuppressLint("SetTextI18n")
         override fun change(
+            holder: DownloadTaskViewHolder,
             itemView: View,
             p: Int,
             downloadTask: PKDownloadTask,
@@ -130,6 +134,7 @@ class DownloadTaskListAdapter(private val downloadTaskList: MutableList<PKDownlo
 
         @SuppressLint("SetTextI18n")
         override fun change(
+            holder: DownloadTaskViewHolder,
             itemView: View,
             p: Int,
             downloadTask: PKDownloadTask,
@@ -162,6 +167,7 @@ class DownloadTaskListAdapter(private val downloadTaskList: MutableList<PKDownlo
 
         @SuppressLint("SetTextI18n")
         override fun change(
+            holder: DownloadTaskViewHolder,
             itemView: View,
             p: Int,
             downloadTask: PKDownloadTask,
@@ -179,8 +185,10 @@ class DownloadTaskListAdapter(private val downloadTaskList: MutableList<PKDownlo
             itemView.iv_item_download_task_cancel.setImageResource(R.drawable.vector_drawable_delete)
             itemView.iv_item_download_task_cancel.setOnClickListener {
                 Pikachu.deleteLocalTask(downloadTask, true)
-                downloadTaskList.removeAt(p)
-                adapter.notifyItemRemoved(p)
+                downloadTaskList.remove(downloadTask)
+                //注意要用layoutPosition,不要用原本的p，因为onBind中传入的位置不会立刻因为item的删除或是移动而改变，
+                //而layoutPosition才是真正可以随时保持刷新的真实位置
+                adapter.notifyItemRemoved(holder.layoutPosition)
             }
             itemView.iv_item_download_task_open_folder.isEnabled = false
         }
@@ -190,6 +198,7 @@ class DownloadTaskListAdapter(private val downloadTaskList: MutableList<PKDownlo
 
         @SuppressLint("SetTextI18n")
         override fun change(
+            holder: DownloadTaskViewHolder,
             itemView: View,
             p: Int,
             downloadTask: PKDownloadTask,
@@ -208,8 +217,8 @@ class DownloadTaskListAdapter(private val downloadTaskList: MutableList<PKDownlo
             itemView.iv_item_download_task_cancel.setImageResource(R.drawable.vector_drawable_delete)
             itemView.iv_item_download_task_cancel.setOnClickListener {
                 Pikachu.deleteLocalTask(downloadTask, true)
-                downloadTaskList.removeAt(p)
-                adapter.notifyItemRemoved(p)
+                downloadTaskList.remove(downloadTask)
+                adapter.notifyItemRemoved(holder.layoutPosition)
             }
             itemView.iv_item_download_task_open_folder.isEnabled = false
         }
@@ -219,6 +228,7 @@ class DownloadTaskListAdapter(private val downloadTaskList: MutableList<PKDownlo
 
         @SuppressLint("SetTextI18n")
         override fun change(
+            holder: DownloadTaskViewHolder,
             itemView: View,
             p: Int,
             downloadTask: PKDownloadTask,
@@ -238,8 +248,8 @@ class DownloadTaskListAdapter(private val downloadTaskList: MutableList<PKDownlo
             itemView.iv_item_download_task_cancel.setImageResource(R.drawable.vector_drawable_delete)
             itemView.iv_item_download_task_cancel.setOnClickListener {
                 Pikachu.deleteLocalTask(downloadTask, true)
-                downloadTaskList.removeAt(p)
-                adapter.notifyItemRemoved(p)
+                downloadTaskList.remove(downloadTask)
+                adapter.notifyItemRemoved(holder.layoutPosition)
             }
             itemView.iv_item_download_task_open_folder.isEnabled = true
             itemView.iv_item_download_task_open_folder.setOnClickListener {
@@ -255,6 +265,7 @@ class DownloadTaskListAdapter(private val downloadTaskList: MutableList<PKDownlo
 
         @SuppressLint("SetTextI18n")
         override fun change(
+            holder: DownloadTaskViewHolder,
             itemView: View,
             p: Int,
             downloadTask: PKDownloadTask,
