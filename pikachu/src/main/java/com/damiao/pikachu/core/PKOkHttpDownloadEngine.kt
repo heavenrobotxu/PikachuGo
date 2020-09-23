@@ -122,9 +122,9 @@ internal class PKOkHttpDownloadEngine(
                 targetBufferedSink = fileSink?.buffer()
                 //在主线程触发task onStart回调监听，开始读取流并写入到本地文件
                 mainHandler.post {
-                    downloadTask.pkRequest.taskProcessListener?.onStart(downloadTask.taskId)
+                    downloadTask.pkRequest.taskProcessListener?.onStart(downloadTask)
                     client.pkGlobalTaskProcessListenerList.forEach { listener ->
-                        listener.onStart(downloadTask.taskId)
+                        listener.onStart(downloadTask)
                     }
                 }
                 downloadTask.triggerPersist()
@@ -173,11 +173,11 @@ internal class PKOkHttpDownloadEngine(
                         //在主线程触发下载进度改变回调监听
                         mainHandler.post {
                             downloadTask.pkRequest.taskProcessListener?.onProcess(
-                                downloadTask.progress, it.contentLength(), downloadTask.taskId
+                                downloadTask.progress, it.contentLength(), downloadTask
                             )
                             client.pkGlobalTaskProcessListenerList.forEach { listener ->
                                 listener.onProcess(
-                                    downloadTask.progress, it.contentLength(), downloadTask.taskId
+                                    downloadTask.progress, it.contentLength(), downloadTask
                                 )
                             }
                         }
@@ -193,13 +193,12 @@ internal class PKOkHttpDownloadEngine(
                 downloadTask.success()
                 //在主线程触发任务完成回调监听
                 mainHandler.post {
-                    downloadTask.pkRequest.taskProcessListener?.onComplete(downloadTask.taskId)
+                    downloadTask.pkRequest.taskProcessListener?.onComplete(downloadTask)
                     client.pkGlobalTaskProcessListenerList.forEach { listener ->
-                        listener.onComplete(downloadTask.taskId)
+                        listener.onComplete(downloadTask)
                     }
                 }
                 client.pkDispatcher.complete(downloadTask)
-
             }
         } catch (reDownloadException: PKTaskNeedReDownloadException) {
             PKLog.debug("目标资源发生了变更，需要重新下载该文件")
@@ -209,9 +208,9 @@ internal class PKOkHttpDownloadEngine(
             download(downloadTask)
         } catch (canceledException: PKTaskCanceledException) {
             PKLog.debug("任务被取消，停止该任务的下载")
-            downloadTask.pkRequest.taskProcessListener?.onCancel(downloadTask.taskId)
+            downloadTask.pkRequest.taskProcessListener?.onCancel(downloadTask)
             client.pkGlobalTaskProcessListenerList.forEach { listener ->
-                listener.onCancel(downloadTask.taskId)
+                listener.onCancel(downloadTask)
             }
             client.pkDispatcher.complete(downloadTask)
         } catch (e: Exception) {
@@ -225,12 +224,12 @@ internal class PKOkHttpDownloadEngine(
             mainHandler.post {
                 downloadTask.pkRequest.taskProcessListener?.onFail(
                     "download execute fail by exception ${e.message}",
-                    e, downloadTask.taskId
+                    e, downloadTask
                 )
                 client.pkGlobalTaskProcessListenerList.forEach { listener ->
                     listener.onFail(
                         "download execute fail by exception ${e.message}",
-                        e, downloadTask.taskId
+                        e, downloadTask
                     )
                 }
             }

@@ -27,6 +27,7 @@ internal class PKRealDownloadDispatcher(private val client: Pikachu) : PKDispatc
     private val downloadEngine: PKDownloadEngine by lazy {
         client.pkDownloadEngine
     }
+
     //task下载速度监听单线程池，定时计算所有下载任务的当前速度
     private val speedWatchExecutor = Executors.newSingleThreadExecutor()
 
@@ -44,10 +45,14 @@ internal class PKRealDownloadDispatcher(private val client: Pikachu) : PKDispatc
     override fun enqueue(pkDownloadTask: PKDownloadTask) {
         //提交到准备队列之前先注册数据库持久器监听其状态变化
         pkDownloadTask.registerObserver(client.pkDownloadTaskPersister)
-        pkDownloadTask.triggerPersist(isUpdate = false)
         synchronized(this) {
             pkDownloadTask.submit()
             readyTaskList.add(pkDownloadTask)
+            //触发任务onReady监听
+            pkDownloadTask.pkRequest.taskProcessListener?.onReady(pkDownloadTask)
+            client.pkGlobalTaskProcessListenerList.forEach {
+                it.onReady(pkDownloadTask)
+            }
         }
         promoteAndExecuteDownloadTask()
     }
@@ -100,8 +105,10 @@ internal class PKRealDownloadDispatcher(private val client: Pikachu) : PKDispatc
                             } else {
                                 val duration = now - realTask.lastCalculateSpeedTime
                                 if (duration >= 1000) {
-                                    realTask.downloadSpeed = "${getDownloadFileSizeDescription(realTask.progress
-                                            - realTask.lastCalculateProgress)}/s"
+                                    realTask.downloadSpeed = "${getDownloadFileSizeDescription(
+                                        realTask.progress
+                                                - realTask.lastCalculateProgress
+                                    )}/s"
                                     realTask.lastCalculateSpeedTime = now
                                     realTask.lastCalculateProgress = realTask.progress
                                 }
@@ -117,6 +124,11 @@ internal class PKRealDownloadDispatcher(private val client: Pikachu) : PKDispatc
     @Synchronized
     override fun gerRunningTaskList(): List<PKDownloadTask> {
         return runningTaskList.toList()
+    }
+
+    @Synchronized
+    override fun gerReadyTaskList(): List<PKDownloadTask> {
+        return readyTaskList.toList()
     }
 
 }

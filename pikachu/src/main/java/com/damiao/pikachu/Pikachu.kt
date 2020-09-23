@@ -3,7 +3,6 @@ package com.damiao.pikachu
 import android.app.Application
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.damiao.pikachu.common.*
 import com.damiao.pikachu.common.PKLog
@@ -27,6 +26,8 @@ object Pikachu {
     val pkDownloadTaskPersister: PkDownloadTaskPersister by lazy {
         pkConfig.pkDownloadTaskPersisterFactory.createDownloadTaskPersister(this)
     }
+
+    val pkTaskGetter: PKTaskGetter = PKRealTaskListGetter(this)
 
     val pkGlobalTaskProcessListenerList: MutableList<PKTaskProcessListener> = mutableListOf()
 
@@ -53,12 +54,6 @@ object Pikachu {
         this.pkConfig = pkConfig
     }
 
-    fun getLocalInterruptedTask() = pkDownloadTaskPersister.getDownloadingTaskList()
-
-    fun getLocalTask() = pkDownloadTaskPersister.getDownloadTaskList()
-
-    fun getExecutingTaskList() = pkDispatcher.gerRunningTaskList()
-
     fun addGlobalTaskProcessListener(listener: PKTaskProcessListener, lifecycle: LifecycleOwner) {
         pkGlobalTaskProcessListenerList.add(listener)
         lifecycle.lifecycle.addObserver(LifecycleEventObserver { _, event ->
@@ -73,7 +68,7 @@ object Pikachu {
         pkGlobalTaskProcessListenerList.remove(listener)
     }
 
-    fun deleteLocalTask(downloadTask: PKDownloadTask, deleteFile : Boolean = false) {
+    fun deleteLocalTask(downloadTask: PKDownloadTask, deleteFile: Boolean = false) {
         if (deleteFile) {
             downloadTask.downloadResultFile?.delete()
         }

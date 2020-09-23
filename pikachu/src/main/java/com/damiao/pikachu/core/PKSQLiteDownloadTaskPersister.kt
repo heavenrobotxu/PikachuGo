@@ -13,7 +13,8 @@ import com.damiao.pikachu.common.*
 import java.io.File
 import java.util.*
 
-internal class PKSQLiteDownloadTaskPersister(private val pikachu: Pikachu) : PkDownloadTaskPersister {
+internal class PKSQLiteDownloadTaskPersister(private val pikachu: Pikachu) :
+    PkDownloadTaskPersister {
 
     private val dbHelper: PKDownloadTaskDbOpenHelper = PKDownloadTaskDbOpenHelper(pikachu.app)
 
@@ -72,36 +73,69 @@ internal class PKSQLiteDownloadTaskPersister(private val pikachu: Pikachu) : PkD
         )
     }
 
-    //查询当前数据库中还未下载完成的任务
+    //查询当前数据库中还未下载完成的任务(包含准备中、提交未执行、正在执行中、以及执行中被暂停4种状态的任务)
     @Synchronized
-    override fun getDownloadingTaskList(): List<PKDownloadTask> {
+    override fun getUnCompleteTaskList(): List<PKDownloadTask> {
         val cursor = dbHelper.readableDatabase.query(
             PK_TABLE_TASK_NAME, null,
             "$PK_TABLE_TASK_COLUMN_TASK_STATUS = ? OR " +
                     "$PK_TABLE_TASK_COLUMN_TASK_STATUS = ? OR " +
+                    "$PK_TABLE_TASK_COLUMN_TASK_STATUS = ? OR " +
                     "$PK_TABLE_TASK_COLUMN_TASK_STATUS = ?",
             arrayOf(
+                "${PKTask.TASK_STATUS_READY}",
                 "${PKTask.TASK_STATUS_EXECUTING}",
-                "${PKTask.TASK_STATUS_PAUSE}",
-                "${PKTask.TASK_STATUS_SUBMITTED}"
-            ), null, null, null
+                "${PKTask.TASK_STATUS_PAUSE}"
+            ), null, null, "$PK_TABLE_TASK_COLUMN_ID DESC"
+        )
+        return getTaskListFromCursor(cursor)
+    }
+
+    //查询当前数据库中已经正常下载完成的任务列表
+    override fun getCompleteTaskList(): List<PKDownloadTask> {
+        val cursor = dbHelper.readableDatabase.query(
+            PK_TABLE_TASK_NAME, null,
+            "$PK_TABLE_TASK_COLUMN_TASK_STATUS = ?",
+            arrayOf("${PKTask.TASK_STATUS_COMPLETE}"),
+            null, null, "$PK_TABLE_TASK_COLUMN_ID DESC"
+        )
+        return getTaskListFromCursor(cursor)
+    }
+
+    //查询当前数据库中下载失败的任务列表
+    override fun getFailTaskList(): List<PKDownloadTask> {
+        val cursor = dbHelper.readableDatabase.query(
+            PK_TABLE_TASK_NAME, null,
+            "$PK_TABLE_TASK_COLUMN_TASK_STATUS = ?",
+            arrayOf("${PKTask.TASK_STATUS_FAIL}"),
+            null, null, "$PK_TABLE_TASK_COLUMN_ID DESC"
+        )
+        return getTaskListFromCursor(cursor)
+    }
+
+    override fun getCancelTaskList(): List<PKDownloadTask> {
+        val cursor = dbHelper.readableDatabase.query(
+            PK_TABLE_TASK_NAME, null,
+            "$PK_TABLE_TASK_COLUMN_TASK_STATUS = ?",
+            arrayOf("${PKTask.TASK_STATUS_CANCEL}"),
+            null, null, "$PK_TABLE_TASK_COLUMN_ID DESC"
         )
         return getTaskListFromCursor(cursor)
     }
 
     //查询数据库中的所有下载任务
     @Synchronized
-    override fun getDownloadTaskList(): List<PKDownloadTask> {
+    override fun getAllDownloadTaskList(): List<PKDownloadTask> {
         val cursor = dbHelper.readableDatabase.query(
             PK_TABLE_TASK_NAME, null, null,
-            null, null, null, null
+            null, null, null, "$PK_TABLE_TASK_COLUMN_ID DESC"
         )
         return getTaskListFromCursor(cursor)
     }
 
     //根据指定taskId查询某个对应的下载任务
     @Synchronized
-    override fun getDownloadTask(taskId: String): PKDownloadTask? {
+    override fun getDownloadTaskByTaskId(taskId: String): PKDownloadTask? {
         val cursor = dbHelper.readableDatabase.query(
             PK_TABLE_TASK_NAME, null,
             "$PK_TABLE_TASK_COLUMN_TASK_ID = ?",
@@ -167,7 +201,7 @@ internal class PKSQLiteDownloadTaskPersister(private val pikachu: Pikachu) : PkD
                 }
                 task.contentLength = contentLength ?: 0
                 //假如入库时当前task已经在执行下载，则将status设置为被中断
-                if (status == PKTask.TASK_STATUS_SUBMITTED || status == PKTask.TASK_STATUS_PAUSE ||
+                if (status == PKTask.TASK_STATUS_READY || status == PKTask.TASK_STATUS_PAUSE ||
                     status == PKTask.TASK_STATUS_EXECUTING
                 ) {
                     task.status = PKTask.TASK_STATUS_INTERRUPTED

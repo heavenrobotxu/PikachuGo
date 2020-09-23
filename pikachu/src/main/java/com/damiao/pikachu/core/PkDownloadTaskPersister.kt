@@ -11,11 +11,17 @@ interface PkDownloadTaskPersister : PKTaskPersister {
 
     fun deleteDownloadTask(downloadTask: PKDownloadTask)
 
-    fun getDownloadTaskList(): List<PKDownloadTask>
+    fun getAllDownloadTaskList(): List<PKDownloadTask>
 
-    fun getDownloadingTaskList(): List<PKDownloadTask>
+    fun getUnCompleteTaskList(): List<PKDownloadTask>
 
-    fun getDownloadTask(taskId: String): PKDownloadTask?
+    fun getCompleteTaskList(): List<PKDownloadTask>
+
+    fun getFailTaskList(): List<PKDownloadTask>
+
+    fun getCancelTaskList(): List<PKDownloadTask>
+
+    fun getDownloadTaskByTaskId(taskId: String): PKDownloadTask?
 
     interface Factory {
 

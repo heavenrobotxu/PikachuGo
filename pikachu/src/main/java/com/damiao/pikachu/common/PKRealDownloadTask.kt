@@ -25,7 +25,7 @@ internal class PKRealDownloadTask(
     override var contentLength: Long = 0
 
     @Volatile
-    override var status: Int = PKTask.TASK_STATUS_READY
+    override var status: Int = PKTask.TASK_STATUS_NEW
 
     @Volatile
     override var failType: Int? = null
@@ -42,7 +42,8 @@ internal class PKRealDownloadTask(
     internal var lastCalculateProgress: Long = -1L
 
     override fun submit() {
-        status = PKTask.TASK_STATUS_SUBMITTED
+        status = PKTask.TASK_STATUS_READY
+        triggerPersist(isUpdate = false)
     }
 
     override fun start() {
@@ -74,20 +75,20 @@ internal class PKRealDownloadTask(
     }
 
     override fun cancel() {
-        if (status <= PKTask.TASK_STATUS_SUBMITTED) {
-            pkRequest.taskProcessListener?.onCancel(taskId)
+        if (status <= PKTask.TASK_STATUS_READY) {
+            pkRequest.taskProcessListener?.onCancel(this)
             Pikachu.pkDispatcher.complete(this)
             Pikachu.pkGlobalTaskProcessListenerList.forEach {
-                it.onCancel(taskId)
+                it.onCancel(this)
             }
             status = PKTask.TASK_STATUS_CANCEL
             triggerPersist()
             return
         }
+        status = PKTask.TASK_STATUS_CANCEL
+        triggerPersist()
         if (isPause()) {
             synchronized(this) {
-                status = PKTask.TASK_STATUS_CANCEL
-                triggerPersist()
                 notifyAll()
             }
         }

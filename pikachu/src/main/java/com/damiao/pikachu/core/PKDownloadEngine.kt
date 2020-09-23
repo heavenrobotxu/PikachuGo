@@ -12,6 +12,6 @@ interface PKDownloadEngine {
 
     interface Factory {
 
-        fun createDownloadEngine(pikachu: Pikachu, okHttpClient: OkHttpClient? = null): PKDownloadEngine
+        fun createDownloadEngine(pikachu: Pikachu): PKDownloadEngine
     }
 }

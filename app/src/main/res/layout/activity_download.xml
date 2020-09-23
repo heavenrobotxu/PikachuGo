@@ -6,12 +6,24 @@
     android:layout_height="match_parent"
     tools:context=".DownloadActivity">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_main_download_list"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:itemCount="3"
-        tools:listitem="@layout/item_layout_download_detail_info"/>
+        android:orientation="vertical">
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tl_download_type"
+            android:layout_width="match_parent"
+            android:layout_height="40dp" />
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/vp_download_detail"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            />
+
+    </LinearLayout>
+
 
     <ImageView
         android:id="@+id/iv_main_add_new_task"

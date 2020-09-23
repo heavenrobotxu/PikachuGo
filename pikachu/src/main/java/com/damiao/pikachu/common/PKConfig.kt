@@ -14,8 +14,10 @@ class PKConfig(
     val targetFilePath: String,
     //线程分发器工厂
     val pkDispatcherFactory: PKDispatcher.Factory = DefaultPkDispatcherFactory(),
+    //若使用okHttp作为下载引擎，外部可传入定制后的okHttpClient，应对一些定制化处理例如处理HTTPS证书问题等
+    private val okHttpClient: OkHttpClient? = null,
     //下载引擎工厂
-    val pkDownloadEngineFactory: PKDownloadEngine.Factory = DefaultPkDownloadEngineFactory(),
+    val pkDownloadEngineFactory: PKDownloadEngine.Factory = DefaultPkDownloadEngineFactory(okHttpClient),
     //下载任务持久化工厂
     val pkDownloadTaskPersisterFactory: PkDownloadTaskPersister.Factory = DefaultPKDownloadTaskPersisterFactory()
 ) {
@@ -35,15 +37,19 @@ class PKConfig(
             }
         }
 
-        class DefaultPkDownloadEngineFactory : PKDownloadEngine.Factory {
+        class DefaultPkDownloadEngineFactory(private val okHttpClient: OkHttpClient? = null) :
+            PKDownloadEngine.Factory {
 
-            override fun createDownloadEngine(
-                pikachu: Pikachu, okHttpClient: OkHttpClient?): PKDownloadEngine {
-                return PKOkHttpDownloadEngine(pikachu)
+            override fun createDownloadEngine(pikachu: Pikachu): PKDownloadEngine {
+                return if (okHttpClient != null) {
+                    PKOkHttpDownloadEngine(pikachu, okHttpClient)
+                } else {
+                    PKOkHttpDownloadEngine(pikachu)
+                }
             }
         }
 
-        class DefaultPKDownloadTaskPersisterFactory: PkDownloadTaskPersister.Factory {
+        class DefaultPKDownloadTaskPersisterFactory : PkDownloadTaskPersister.Factory {
 
             override fun createDownloadTaskPersister(pikachu: Pikachu): PkDownloadTaskPersister {
                 return PKSQLiteDownloadTaskPersister(pikachu)

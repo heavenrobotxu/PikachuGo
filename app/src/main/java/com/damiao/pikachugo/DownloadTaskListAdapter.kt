@@ -239,7 +239,11 @@ class DownloadTaskListAdapter(private val downloadTaskList: MutableList<PKDownlo
             itemView.tv_item_download_task_progress_detail.text =
                 "${getDownloadFileSizeDescription(downloadTask.progress)} / " +
                         getDownloadFileSizeDescription(downloadTask.contentLength)
-            itemView.tv_item_download_task_speed.text = "任务已完成"
+            if (downloadTask.progress != downloadTask.contentLength) {
+                itemView.tv_item_download_task_speed.text = "文件已删除"
+            } else {
+                itemView.tv_item_download_task_speed.text = "任务已完成"
+            }
             itemView.pb_item_download_progress.max = downloadTask.contentLength.toInt()
             itemView.pb_item_download_progress.progress = downloadTask.progress.toInt()
             itemView.iv_item_download_task_pause.isEnabled = false

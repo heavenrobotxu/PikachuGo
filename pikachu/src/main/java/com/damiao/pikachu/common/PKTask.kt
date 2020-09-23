@@ -30,8 +30,8 @@ interface PKTask : LifecycleObserver{
 
     companion object {
         const val TASK_STATUS_INTERRUPTED = -1
-        const val TASK_STATUS_READY = 0
-        const val TASK_STATUS_SUBMITTED = 1
+        const val TASK_STATUS_NEW = 0
+        const val TASK_STATUS_READY = 1
         const val TASK_STATUS_EXECUTING = 2
         const val TASK_STATUS_PAUSE = 3
         const val TASK_STATUS_CANCEL = 4

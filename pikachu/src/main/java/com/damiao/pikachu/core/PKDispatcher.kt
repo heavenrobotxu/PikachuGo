@@ -12,6 +12,8 @@ interface PKDispatcher {
 
     fun gerRunningTaskList() : List<PKDownloadTask>
 
+    fun gerReadyTaskList() : List<PKDownloadTask>
+
     interface Factory {
 
         fun createPKDispatcher(pikachu: Pikachu) : PKDispatcher
