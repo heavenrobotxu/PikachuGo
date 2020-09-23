@@ -214,7 +214,7 @@ internal class PKOkHttpDownloadEngine(
             }
             client.pkDispatcher.complete(downloadTask)
         } catch (e: Exception) {
-            //先关闭所有资源
+            //先关闭所有IO资源
             closeAll(fileSink, targetBufferedSink, bodySource, response)
             //将对应的task status置为失败，
             PKLog.error("download fail ${e.message}")
