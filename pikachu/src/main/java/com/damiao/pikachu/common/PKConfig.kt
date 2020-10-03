@@ -5,6 +5,9 @@ import android.os.Environment
 import com.damiao.pikachu.Pikachu
 import com.damiao.pikachu.core.*
 import com.damiao.pikachu.core.PKRealDownloadDispatcher
+import com.damiao.pikachu.core.engine.PKDownloadEngine
+import com.damiao.pikachu.core.engine.PKHttpDownloadEngine
+import com.damiao.pikachu.core.engine.PKMagnetDownloadEngine
 import okhttp3.OkHttpClient
 
 class PKConfig(
@@ -40,12 +43,17 @@ class PKConfig(
         class DefaultPkDownloadEngineFactory(private val okHttpClient: OkHttpClient? = null) :
             PKDownloadEngine.Factory {
 
-            override fun createDownloadEngine(pikachu: Pikachu): PKDownloadEngine {
-                return if (okHttpClient != null) {
-                    PKOkHttpDownloadEngine(pikachu, okHttpClient)
+            override fun createDownloadEngine(pikachu: Pikachu): List<PKDownloadEngine> {
+                val httpDownloadEngine = if (okHttpClient != null) {
+                    PKHttpDownloadEngine(
+                        pikachu,
+                        okHttpClient
+                    )
                 } else {
-                    PKOkHttpDownloadEngine(pikachu)
+                    PKHttpDownloadEngine(pikachu)
                 }
+                val magnetDownloadEngine = PKMagnetDownloadEngine(pikachu)
+                return listOf(httpDownloadEngine, magnetDownloadEngine)
             }
         }
 

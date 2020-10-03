@@ -3,6 +3,7 @@ package com.damiao.pikachu.core
 import com.damiao.pikachu.Pikachu
 import com.damiao.pikachu.common.PKDownloadTask
 import com.damiao.pikachu.common.PKRealDownloadTask
+import com.damiao.pikachu.core.engine.PKDownloadEngine
 import com.damiao.pikachu.util.getDownloadFileSizeDescription
 import java.util.*
 import java.util.concurrent.Executors
@@ -11,6 +12,7 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 internal class PKRealDownloadDispatcher(private val client: Pikachu) : PKDispatcher {
+
     //等待执行下载的Task列表
     private val readyTaskList = ArrayDeque<PKDownloadTask>()
 
@@ -24,8 +26,8 @@ internal class PKRealDownloadDispatcher(private val client: Pikachu) : PKDispatc
     private val maxRunningSize = client.pkConfig.maxConcurrentTaskSize
 
     //下载引擎,惰性加载，promote调用时才从pikachu中获取下载引擎
-    private val downloadEngine: PKDownloadEngine by lazy {
-        client.pkDownloadEngine
+    private val downloadEngineRegister: PKDownloadEngineRegister by lazy {
+        client.pkDownloadEngRegister
     }
 
     //task下载速度监听单线程池，定时计算所有下载任务的当前速度
@@ -80,7 +82,8 @@ internal class PKRealDownloadDispatcher(private val client: Pikachu) : PKDispatc
                         return@let
                     }
                     executorService.submit {
-                        downloadEngine.download(it)
+                        downloadEngineRegister.findDownloadEngine(it.pkRequest.targetUrl)
+                            ?.download(it)
                     }
                     runningTaskList.add(it)
                 }
@@ -92,7 +95,7 @@ internal class PKRealDownloadDispatcher(private val client: Pikachu) : PKDispatc
     private fun startCalculateTaskSpeed() {
         speedWatchExecutor.submit {
             while (true) {
-                Thread.sleep(500)
+                Thread.sleep(200)
                 synchronized(this) {
                     if (!runningTaskList.isEmpty()) {
                         for (pkDownloadTask in runningTaskList) {
@@ -104,10 +107,10 @@ internal class PKRealDownloadDispatcher(private val client: Pikachu) : PKDispatc
                                 continue
                             } else {
                                 val duration = now - realTask.lastCalculateSpeedTime
-                                if (duration >= 1000) {
+                                if (duration >= 500) {
                                     realTask.downloadSpeed = "${getDownloadFileSizeDescription(
-                                        realTask.progress
-                                                - realTask.lastCalculateProgress
+                                        (realTask.progress
+                                                - realTask.lastCalculateProgress) * 2
                                     )}/s"
                                     realTask.lastCalculateSpeedTime = now
                                     realTask.lastCalculateProgress = realTask.progress

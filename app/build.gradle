@@ -15,6 +15,11 @@ android {
         multiDexEnabled false
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        
+        ndk {
+            abiFilters "armeabi-v7a"
+        }
+
     }
 
     compileOptions {

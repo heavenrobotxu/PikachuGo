@@ -107,7 +107,11 @@ class DownloadTaskListAdapter(private val downloadTaskList: MutableList<PKDownlo
             downloadTask: PKDownloadTask,
             adapter: DownloadTaskListAdapter
         ) {
-            itemView.tv_item_download_task_name.text = downloadTask.downloadFileName
+            itemView.tv_item_download_task_name.text = if (downloadTask.downloadFileName.isNullOrBlank()) {
+                downloadTask.pkRequest.targetUrl
+            } else {
+                downloadTask.downloadFileName
+            }
             itemView.tv_item_download_task_progress_detail.text =
                 "${getDownloadFileSizeDescription(downloadTask.progress)} / " +
                         getDownloadFileSizeDescription(downloadTask.contentLength)
@@ -119,6 +123,7 @@ class DownloadTaskListAdapter(private val downloadTaskList: MutableList<PKDownlo
             itemView.iv_item_download_task_pause.isEnabled = true
             itemView.iv_item_download_task_pause.setOnClickListener {
                 downloadTask.pause()
+                adapter.notifyItemChanged(holder.layoutPosition)
             }
             itemView.iv_item_download_task_resume.isEnabled = false
             itemView.iv_item_download_task_cancel.setImageResource(R.drawable.selector_cancel)
@@ -153,6 +158,7 @@ class DownloadTaskListAdapter(private val downloadTaskList: MutableList<PKDownlo
             itemView.iv_item_download_task_resume.isEnabled = true
             itemView.iv_item_download_task_resume.setOnClickListener {
                 downloadTask.resume()
+                adapter.notifyItemChanged(holder.layoutPosition)
             }
             itemView.iv_item_download_task_cancel.setImageResource(R.drawable.selector_cancel)
             itemView.iv_item_download_task_cancel.isEnabled = true

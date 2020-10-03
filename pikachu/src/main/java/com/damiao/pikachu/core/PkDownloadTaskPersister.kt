@@ -9,6 +9,8 @@ interface PkDownloadTaskPersister : PKTaskPersister {
 
     fun updateDownloadTask(downloadTask: PKDownloadTask)
 
+    fun updateDownloadTaskProgress(downloadTask: PKDownloadTask)
+
     fun deleteDownloadTask(downloadTask: PKDownloadTask)
 
     fun getAllDownloadTaskList(): List<PKDownloadTask>

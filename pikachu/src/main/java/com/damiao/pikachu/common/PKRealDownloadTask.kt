@@ -43,7 +43,7 @@ internal class PKRealDownloadTask(
 
     override fun submit() {
         status = PKTask.TASK_STATUS_READY
-        triggerPersist(isUpdate = false)
+        triggerPersist(progress != 0L)
     }
 
     override fun start() {
@@ -57,6 +57,9 @@ internal class PKRealDownloadTask(
             return
         }
         status = PKTask.TASK_STATUS_PAUSE
+        taskStatusChangedListener.forEach {
+            it.invoke(PKTask.TASK_CHANGE_TYPE_EXECUTING_TO_PAUSE)
+        }
     }
 
     override fun resume() {
@@ -71,6 +74,9 @@ internal class PKRealDownloadTask(
         status = PKTask.TASK_STATUS_EXECUTING
         synchronized(this) {
             notifyAll()
+        }
+        taskStatusChangedListener.forEach {
+            it.invoke(PKTask.TASK_CHANGE_TYPE_PAUSE_TO_EXECUTING)
         }
     }
 
@@ -92,11 +98,13 @@ internal class PKRealDownloadTask(
                 notifyAll()
             }
         }
+        taskStatusChangedListener.forEach {
+            it.invoke(PKTask.TASK_CHANGE_TYPE_CANCELED)
+        }
     }
 
     override fun fail(reason: String?, exception: RuntimeException?) {
         status = PKTask.TASK_STATUS_FAIL
-        failType = PKTask.TASK_FAIL_TYPE_COMMON_FAIL
         failMessage = reason ?: exception?.message ?: "unknown fail reason"
         triggerPersist()
     }

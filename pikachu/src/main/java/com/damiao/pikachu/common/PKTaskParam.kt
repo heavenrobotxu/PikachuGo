@@ -1,8 +1,8 @@
 package com.damiao.pikachu.common
 
-import android.os.Environment
 import androidx.lifecycle.LifecycleOwner
 import com.damiao.pikachu.Pikachu
+import com.damiao.pikachu.core.engine.PKDownloadEngine
 import com.damiao.pikachu.util.uuid
 import java.io.File
 
@@ -36,9 +36,15 @@ class PKTaskParam(
         if (!checkArgs()) {
             throw IllegalArgumentException("build pikachu task argument illegal")
         }
+        val downloadEngine = client.pkDownloadEngRegister.findDownloadEngine(url)
+        if (downloadEngine == null) {
+            PKLog.error("can not find download engine for url $url")
+            throw IllegalArgumentException("can not find download engine for url $url")
+        }
         val downloadRequest =
             PKDownloadTaskRequest(this.url, targetDirectorPath, taskProcessListener)
         val downloadTask = PKRealDownloadTask(downloadRequest, uuid())
+        downloadTask.needDbProgress = downloadEngine.needDbProgress()
         lifecycle.lifecycle.addObserver(downloadTask)
         client.pkDispatcher.enqueue(downloadTask)
         return downloadTask

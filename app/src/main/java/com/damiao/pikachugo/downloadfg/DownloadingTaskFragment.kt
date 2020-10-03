@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.SimpleItemAnimator
 import com.damiao.pikachu.Pikachu
 import com.damiao.pikachu.common.PKDownloadTask
 import com.damiao.pikachu.common.PKTaskProcessListener
@@ -41,21 +42,26 @@ class DownloadingTaskFragment : Fragment() {
 
         view.rv_fg_downloading_list.setHasFixedSize(true)
         view.rv_fg_downloading_list.layoutManager = LinearLayoutManager(activity)
+        downloadTaskAdapter.setHasStableIds(true)
+        (view.rv_fg_downloading_list.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
         view.rv_fg_downloading_list.adapter = downloadTaskAdapter
 
 
         val taskProcessListener = object : PKTaskProcessListener {
 
-
-            override fun onStart(downloadTask: PKDownloadTask) {
+            override fun onReady(downloadTask: PKDownloadTask) {
                 if (downloadingTaskList.find { it.taskId == downloadTask.taskId } == null) {
                     downloadingTaskList.add(0, downloadTask)
                     downloadTaskAdapter.notifyItemInserted(0)
                 }
             }
 
+            override fun onStart(downloadTask: PKDownloadTask) {
+                notifyAdapter(downloadTask)
+            }
+
             override fun onProcess(process: Long, length: Long, downloadTask: PKDownloadTask) {
-                notifyAdapter(downloadTask.taskId)
+                notifyAdapter(downloadTask)
             }
 
             override fun onComplete(downloadTask: PKDownloadTask) {
@@ -93,9 +99,12 @@ class DownloadingTaskFragment : Fragment() {
         Pikachu.addGlobalTaskProcessListener(taskProcessListener, this)
     }
 
-    private fun notifyAdapter(taskId: String) {
-        downloadTaskAdapter
-            .notifyItemChanged(downloadingTaskList.indexOf(downloadingTaskList.find { it.taskId == taskId }))
+    private fun notifyAdapter(downloadTask: PKDownloadTask) {
+        val changedItem = downloadingTaskList.find { it.taskId == downloadTask.taskId}
+        if (changedItem != null) {
+            downloadTaskAdapter
+                .notifyItemChanged(downloadingTaskList.indexOf(changedItem))
+        }
     }
 
 }

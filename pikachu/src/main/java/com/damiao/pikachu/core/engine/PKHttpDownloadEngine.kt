@@ -1,4 +1,4 @@
-package com.damiao.pikachu.core
+package com.damiao.pikachu.core.engine
 
 import android.os.Handler
 import android.os.Looper
@@ -20,7 +20,8 @@ import okhttp3.internal.wait
 import okio.*
 import java.io.File
 
-internal class PKOkHttpDownloadEngine(
+//HTTP下载引擎(OkHttp)
+internal class PKHttpDownloadEngine(
     private val client: Pikachu,
     private val okHttpClient: OkHttpClient = OkHttpClient()
 ) : PKDownloadEngine {
@@ -31,6 +32,10 @@ internal class PKOkHttpDownloadEngine(
     }
 
     private val mainHandler = Handler(Looper.getMainLooper())
+
+    override fun supportProto(): List<String> = listOf("http", "https")
+
+    override fun needDbProgress() = false
 
     override fun download(downloadTask: PKDownloadTask) {
         val url = checkProto(downloadTask) ?: return
