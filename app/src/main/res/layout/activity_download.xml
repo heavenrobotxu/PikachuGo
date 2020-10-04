@@ -4,7 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".DownloadActivity">
+    tools:context=".DownloadActivity"
+    android:fitsSystemWindows="true"
+    android:background="@color/color_content_background">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,7 +16,10 @@
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tl_download_type"
             android:layout_width="match_parent"
-            android:layout_height="40dp" />
+            android:layout_height="40dp"
+            app:tabIndicatorColor="@color/color_yellow_main"
+            app:tabTextColor="@color/color_yellow_light"
+            app:tabSelectedTextColor="@color/color_yellow_main"/>
 
         <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/vp_download_detail"
@@ -24,14 +29,13 @@
 
     </LinearLayout>
 
-
     <ImageView
         android:id="@+id/iv_main_add_new_task"
         android:layout_width="70dp"
         android:layout_height="70dp"
         android:layout_gravity="end|bottom"
         android:layout_marginEnd="10dp"
-        android:layout_marginBottom="10dp"
+        android:layout_marginBottom="15dp"
         android:src="@drawable/vector_drawable_add"/>
 
 </FrameLayout>

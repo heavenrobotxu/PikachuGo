@@ -58,9 +58,13 @@ dependencies {
 
     implementation 'org.jetbrains.anko:anko:0.10.8'
 
+
     implementation project(':pikachu')
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+
     debugImplementation 'damiao.hr:dbviewer:0.0.1'
+    implementation 'cn.yipianfengye.android:zxing-library:2.2'
+
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.4'
 
     testImplementation 'junit:junit:4.12'

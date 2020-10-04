@@ -4,11 +4,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="150dp"
-    android:background="#FFFFFF"
     android:orientation="vertical"
     android:layout_margin="10dp"
     app:cardCornerRadius="7dp"
-    app:cardElevation="3dp">
+    app:cardElevation="3dp"
+    app:cardBackgroundColor="@color/content_light_background">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -22,21 +22,22 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:textSize="17sp"
-            android:textColor="#2c2c2c"
+            android:textColor="@color/color_yellow_light"
             tools:text="宠物小精灵.mp4"
             android:singleLine="true"
-            android:ellipsize="middle"/>
+            android:ellipsize="middle" />
 
         <ProgressBar
             android:id="@+id/pb_item_download_progress"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
-            android:layout_height="25dp"
-            android:layout_marginTop="10dp"
+            android:layout_height="3dp"
             android:max="100"
             android:progress="0"
             android:layout_above="@id/tv_item_download_task_progress_detail"
-            android:layout_marginBottom="5dp"/>
+            android:layout_marginBottom="10dp"
+            android:progressDrawable="@drawable/layer_progress"
+            />
 
         <TextView
             android:id="@+id/tv_item_download_task_progress_detail"
@@ -45,7 +46,7 @@
             android:textSize="18sp"
             android:layout_alignParentBottom="true"
             android:layout_marginBottom="10dp"
-            android:textColor="#2c2c2c"
+            android:textColor="@color/color_yellow_light"
             tools:text="15Mb / 200MB"/>
 
         <TextView
@@ -57,7 +58,7 @@
             android:layout_alignParentBottom="true"
             android:layout_alignParentEnd="true"
             android:layout_marginBottom="10dp"
-            android:textColor="#2c2c2c"
+            android:textColor="@color/color_yellow_light"
             tools:text="15Mb/s"
             android:gravity="end"/>
 

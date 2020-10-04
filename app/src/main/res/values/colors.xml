@@ -4,4 +4,11 @@
     <color name="colorPrimaryDark">#3700B3</color>
     <color name="colorAccent">#03DAC5</color>
     <color name="color_yellow_main">#FFE930</color>
+    <color name="color_yellow_light">#FFFACD</color>
+    <color name="color_black_main">#121212</color>
+    <color name="color_content_background">#1e1e1e</color>
+    <color name="content_light_background">#363636</color>
+    <color name="text_color">#e0e0e0</color>
+    <color name="light_purple_color">#c28ffe</color>
+    <color name="light_green_color">#00ddc5</color>
 </resources>

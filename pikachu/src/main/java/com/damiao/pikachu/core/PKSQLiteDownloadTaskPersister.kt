@@ -36,9 +36,11 @@ internal class PKSQLiteDownloadTaskPersister(private val pikachu: Pikachu) :
                 //保存下载任务url
                 put(PK_TABLE_TASK_COLUMN_TASK_TARGET_URL, downloadTask.pkRequest.targetUrl)
                 //保存任务是否需要使用本地progress
-                put(PK_TABLE_TASK_COLUMN_TASK_USE_LOCAL_PROGRESS,
+                put(
+                    PK_TABLE_TASK_COLUMN_TASK_USE_LOCAL_PROGRESS,
                     if (downloadTask.needDbProgress) USE_DB_PROGRESS
-                    else USE_LOCAL_FILE_PROGRESS)
+                    else USE_LOCAL_FILE_PROGRESS
+                )
             })
     }
 
@@ -203,26 +205,34 @@ internal class PKSQLiteDownloadTaskPersister(private val pikachu: Pikachu) :
                     downloadFileName = downloadFileName
                 )
                 task.progress = 0
-                val needDbProgress =  it.getInt(it.getColumnIndex(
-                    PK_TABLE_TASK_COLUMN_TASK_USE_LOCAL_PROGRESS))
+                val needDbProgress = it.getInt(
+                    it.getColumnIndex(
+                        PK_TABLE_TASK_COLUMN_TASK_USE_LOCAL_PROGRESS
+                    )
+                )
                 task.needDbProgress = needDbProgress == USE_DB_PROGRESS
-                if (task.needDbProgress) {
-                    task.progress = it.getLong(it.getColumnIndex(
-                        PK_TABLE_TASK_COLUMN_TASK_PROGRESS))
-                } else {
-                    downloadFileName?.let { name ->
-                        val localFile = File(localPath, name)
-                        if (localFile.exists()) {
-                            //若本地文件存在，则直接使用本地文件的length作为已下载的progress值，若本地文件被删除或不存在，则progress为0
-                            //任务从0开始重新下载
+
+                downloadFileName?.let { name ->
+                    val localFile = File(localPath, name)
+                    if (localFile.exists()) {
+                        //若本地文件存在，判断task的progress是否需要使用本地数据库中保存的progress值
+                        if (task.needDbProgress) {
+                            task.progress = it.getLong(
+                                it.getColumnIndex(
+                                    PK_TABLE_TASK_COLUMN_TASK_PROGRESS
+                                )
+                            )
+                        } else {
+                            //不需要则使用本地文件已下载的大小作为task的progress(例如http下载任务)
                             task.progress = localFile.length()
-                            if (localFile.length() == contentLength) {
-                                //本地文件大小与下载总大小相同，说明当前文件已经下载完成
-                                task.downloadResultFile = localFile
-                            }
+                        }
+                        if (localFile.length() == contentLength) {
+                            //本地文件大小与下载总大小相同，说明当前文件已经下载完成
+                            task.downloadResultFile = localFile
                         }
                     }
                 }
+
                 task.contentLength = contentLength ?: 0
                 //假如入库时当前task已经在执行下载，则将status设置为被中断
                 if (status == PKTask.TASK_STATUS_READY || status == PKTask.TASK_STATUS_PAUSE ||

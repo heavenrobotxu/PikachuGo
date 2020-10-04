@@ -1,9 +1,8 @@
 package com.damiao.pikachugo
 
-import android.Manifest
 import android.app.Application
-import androidx.core.app.ActivityCompat
 import com.damiao.pikachu.Pikachu
+import com.uuzuche.lib_zxing.activity.ZXingLibrary
 
 class App : Application() {
 
@@ -11,5 +10,7 @@ class App : Application() {
         super.onCreate()
 
         Pikachu.init(this)
+
+        ZXingLibrary.initDisplayOpinion(this)
     }
 }

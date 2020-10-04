@@ -2,16 +2,17 @@ package com.damiao.pikachugo
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import kotlinx.android.synthetic.main.activity_main.*
+import android.os.Handler
 import org.jetbrains.anko.startActivity
 
-class MainActivity : AppCompatActivity() {
+class WelcomeActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        btn_go_download.setOnClickListener {
+        setContentView(R.layout.activity_welcome)
+        Handler().postDelayed({
             startActivity<DownloadActivity>()
-        }
+            finish()
+        }, 500)
     }
 }

@@ -32,14 +32,14 @@ class PKTaskParam(
     }
 
     //提交下载任务到Dispatcher中，返回PkDownloadTask信息
-    fun download(): PKDownloadTask {
+    fun download(): PKDownloadTask? {
         if (!checkArgs()) {
-            throw IllegalArgumentException("build pikachu task argument illegal")
+            return null
         }
         val downloadEngine = client.pkDownloadEngRegister.findDownloadEngine(url)
         if (downloadEngine == null) {
-            PKLog.error("can not find download engine for url $url")
-            throw IllegalArgumentException("can not find download engine for url $url")
+            PKLog.error("can not find download engine for url : $url")
+            return null
         }
         val downloadRequest =
             PKDownloadTaskRequest(this.url, targetDirectorPath, taskProcessListener)

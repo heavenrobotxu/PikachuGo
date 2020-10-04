@@ -42,8 +42,9 @@ internal class PKRealDownloadTask(
     internal var lastCalculateProgress: Long = -1L
 
     override fun submit() {
+        val oldStatus = status
         status = PKTask.TASK_STATUS_READY
-        triggerPersist(progress != 0L)
+        triggerPersist(oldStatus == PKTask.TASK_STATUS_INTERRUPTED)
     }
 
     override fun start() {
