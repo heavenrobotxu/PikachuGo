@@ -1,6 +1,8 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
 
 android {
     compileSdkVersion 29
@@ -41,9 +43,78 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:4.8.1'
     implementation 'com.squareup.okhttp3:okhttp-tls:4.8.1'
     implementation 'org.libtorrent4j:libtorrent4j-android-arm:2.0.0-3'
+}
 
-    /*testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'*/
+group = "damiao.hr"
+version = "0.0.1"
 
+install {
+    repositories.mavenInstaller {
+        // This generates POM.xml with proper parameters
+        pom {
+            project {
+                packaging 'aar'
+                // Add your description here
+                description 'An Android Download Library'
+                name 'Pikachu'  // 可默认，项目描述
+                url 'https://github.com/heavenrobotxu/PikachuGo'
+                // Set your license
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer { //  可默认，开发者信息
+                        id 'damiaomiao'
+                        name 'xudamiao'
+                        email 'heavenrobotxu@gmail.com'
+                    }
+                }
+                scm {
+                    connection 'https://github.com/heavenrobotxu/PikachuGo.git'
+                    developerConnection 'https://github.com/heavenrobotxu/PikachuGo.git'
+                    url 'https://github.com/heavenrobotxu/PikachuGo'
+                }
+            }
+        }
+    }
+}
+
+task androidJavadocs(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+}
+
+task androidJavadocsJar(type: Jar) {
+    classifier = 'javadoc'
+    from androidJavadocs.destinationDir
+}
+task androidSourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main.java.srcDirs
+}
+
+artifacts {
+    archives androidSourcesJar
+    archives androidJavadocsJar
+}
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+//这个是和你bintray上面创建的package(项目)是对应的
+bintray {
+    user = properties.getProperty('bintray.user')
+    key = properties.getProperty('bintray.pwd')
+    configurations = ['archives']
+    pkg {
+        repo = "pikachu"  //发布到Bintray的那个仓库里，默认账户有四个库，我们这里上传到maven库
+        name = "pikachu"  //需更改，这个名字就是你在Bintray上创建Package的名字，这里会查询，如果此包不存在就会创建一个。
+        userOrg = 'heavenrobotxu'    //组织名称 organization
+        websiteUrl = 'https://github.com/heavenrobotxu/PikachuGo'
+        vcsUrl = 'https://github.com/heavenrobotxu/PikachuGo.git'
+        licenses = ["Apache-2.0"]
+        publish = true
+    }
 }
