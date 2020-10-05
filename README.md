@@ -34,7 +34,7 @@ implementation 'damiao.hr:pikachu:0.0.1'
 ```
 ### 使用
 
-##### 请先在应用的Application中初始化Pikachu
+#### 请先在应用的Application中初始化Pikachu
 
 ```kotlin
 class App : Application() {
@@ -47,7 +47,7 @@ class App : Application() {
 }
 ```
 
-##### 基础使用
+#### 基础使用
 
 ```kotlin
 Pikachu.with(this)
@@ -62,7 +62,7 @@ Pikachu.with(this)
 ```
 如果不关心下载过程，仅需要使用pikachu下载某个目标文件，并在下载完成后拿到下载到本地的文件路径，那么上面这个简单的示例就可以完全满足要求，目标文件会默认下载到应用在存储卡私有目录的download目录中（Environment.DIRECTORY_DOWNLOADS）,该目录不需要显式的声明任何权限，当然您也可以选择自定义任务的下载目录（上面例子中注释掉的指定下载文件夹代码），但要注意，如果是需要显式赋予读写权限的目录，pikachu不会自动帮您申请权限，仅仅会校验是否获取了权限，应用程序需要在指定之前先请求SD卡的读写权限。
 
-##### 操作下载任务
+#### 操作下载任务
 
 如果需要对下载过程有更精细的操作，例如暂停、恢复、取消下载任务，以及实时展示下载任务的下载进度等需求，那么可以像下面这样使用
 
@@ -141,7 +141,7 @@ val taskProcessListener = object : PKTaskProcessListener {
 Pikachu.addGlobalTaskProcessListener(taskProcessListener, lifecycle = this)
 ```
 
-##### 断点续传
+#### 断点续传
 
 在下载过程中，若应用被杀死，那么在当应用重启后可以使用以下函数获取到之前还未下载完成的PKDownloadTask并恢复下载
 
@@ -158,7 +158,7 @@ val failedTask = Pikachu.pkTaskGetter.getFailedTask()
 ...
 ```
 
-##### 更多
+#### 更多
 
 更多的其他用法，包括PKDownloadTask的具体状态值等请参考demo app : PikachuGo中的代码，感谢支持~
 
