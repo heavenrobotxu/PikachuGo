@@ -51,10 +51,10 @@ class App : Application() {
 
 ```kotlin
 Pikachu.with(this)
-			 .url("https://xxxxx/ssss.mp4")
-			 //.targetPath("sdcard/download/pp")
-			 .taskProcessListener(object : PKTaskProcessListener {
-                override fun onComplete(downloadTask: PKDownloadTask) {
+	.url("https://xxxxx/ssss.mp4")
+	//.targetPath("sdcard/download/pp")
+	.taskProcessListener(object : PKTaskProcessListener {
+		override fun onComplete(downloadTask: PKDownloadTask) {
                     Log.d("PIKACHU", "任务下载完成，本地文件路径 ${downloadTask.downloadResultFile?.path}")
                 }
        })
